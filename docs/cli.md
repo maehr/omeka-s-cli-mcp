@@ -31,6 +31,19 @@ omeka-s patch items 1 --payload replacement.json --replace-rdf-values --dry-run
 
 Each payload file holds one JSON object. The CLI uses the same RDF replacement rules as the Python API. [Python API](usage.md#write-records)
 
+### Delete a record
+
+**Caution.** Check the installation, resource, and ID in the preview. Omeka S permanently deletes the record when you confirm.
+
+Run `omeka-s delete items 123` or add `--dry-run` to print the target without contacting Omeka S. Add `--confirm` to send the request. Use only one flag per command.
+
+```sh
+omeka-s delete items 123 --dry-run
+omeka-s delete items 123 --confirm
+```
+
+Check the record before you repeat a deletion after an unknown outcome or a server error. [Write errors](security.md#writes)
+
 ## Output and exit codes
 
 The CLI prints results to standard output. It prints errors to standard error.

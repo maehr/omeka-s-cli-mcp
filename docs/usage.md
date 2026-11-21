@@ -54,6 +54,14 @@ with OmekaClient(
 
 Pass `replace_rdf_values=True` when the payload contains RDF values or `clear_property_values`. The client sends each write once. Check the record before you repeat a write after an unknown outcome or a server error. [Security](security.md)
 
+### Delete a record
+
+**Caution.** Verify the installation, resource, and ID before you call `delete`. Omeka S permanently deletes the record.
+
+Use `client.delete("items", 123)` with an authenticated client that has permission to delete the record. The call sends the request immediately and returns `None` on success. A missing record raises `OmekaHTTPError` with status `404`.
+
+Some Omeka S versions can return HTTP 500 after they delete an item. [Compatibility](compatibility.md)
+
 ## Capture a snapshot
 
 ```python

@@ -27,6 +27,7 @@ from .. import (
     property_filters,
     write_snapshot,
 )
+from .._urls import validate_resource_name
 from ..types import Scalar
 from .settings import McpSettings
 
@@ -243,6 +244,31 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
                 "record": client.patch(
                     resource, record_id, payload, replace_rdf_values=replace_rdf_values
                 ),
+            }
+
+    @server.tool(
+        tags={"write"},
+        annotations=ToolAnnotations(destructive_hint=True, idempotent_hint=False),
+        description="Preview or permanently delete one record. Set confirm to send the request.",
+    )
+    def omeka_delete_record(
+        ctx: Context, resource: str, record_id: Positive, confirm: StrictBool = False
+    ) -> dict[str, Any]:
+        if not allow_writes:
+            raise ToolError("Omeka write tools are disabled.")
+        with _api(ctx) as client:
+            if confirm:
+                client.delete(resource, record_id)
+                return {"sent": True, "resource": resource, "id": record_id}
+            validate_resource_name(resource)
+            return {
+                "sent": False,
+                "preview": {
+                    "method": "DELETE",
+                    "resource": resource,
+                    "id": record_id,
+                    "installation_url": client.installation_url,
+                },
             }
 
     @server.resource("omeka://{resource}/{id}", mime_type="application/json", tags={"read"})
