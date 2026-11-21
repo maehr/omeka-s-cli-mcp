@@ -16,3 +16,7 @@ The deletion tests check that Omeka S removes the item on all three versions. Ve
 Omeka S 3.2.3 adds `sort_by=id` and `sort_order=asc` to next links when the request omits them. The tested 4.x versions also add empty `sort_by_default` and `sort_order_default` parameters. The client accepts those defaults and checks the remaining filters.
 
 Use `page` and `per_page` for paging. Read `api_resources` for JSON resource discovery. The `/api` path returns an HTML page.
+
+## Pyodide
+
+The playground runs on Pyodide 314.0.8. The synchronous transport needs JSPI in the browser. The playground instead uses `pyodide.http.pyxhr` in a web worker. Snapshot capture is not supported because it starts threads. File download is not supported because Pyodide has no `os.link`. [Playground](playground.md)

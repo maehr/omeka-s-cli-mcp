@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>omeka-s-client playground</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>omeka-s-client playground</h1>
+  <p>Run the real <code>omeka_s_client</code> package in your browser with Pyodide.
+  Demo mode uses a seeded fake Omeka S installation. See the
+  <a href="https://github.com/maehr/omeka-s-client">repository</a>.</p>
+</header>
+<main>
+  <p id="status" role="status">Loading Pyodide...</p>
+  <form id="form">
+    <fieldset>
+      <legend>Mode</legend>
+      <label><input type="radio" name="mode" value="demo" checked> Demo</label>
+      <label><input type="radio" name="mode" value="live"> Live</label>
+      <div id="live-box" hidden>
+        <label>Omeka S URL <input id="url" type="url" placeholder="https://omeka.example.org"></label>
+        <p class="note">Public reads only. The server must allow CORS.</p>
+      </div>
+    </fieldset>
+    <label>Operation
+      <select id="op">
+        <option value="get">get</option>
+        <option value="page">page</option>
+        <option value="list">list</option>
+        <option value="create">create</option>
+        <option value="patch">patch</option>
+        <option value="delete">delete</option>
+        <option value="upload">upload</option>
+      </select>
+    </label>
+    <div class="inputs">
+      <label data-ops="get page list create patch delete">Resource <input id="resource" value="items"></label>
+      <label data-ops="get patch delete">ID <input id="id" type="number" min="1" value="1"></label>
+      <label data-ops="page">Page <input id="page" type="number" min="1" value="1"></label>
+      <label data-ops="page list">Per page <input id="per_page" type="number" min="1" value="10"></label>
+      <label data-ops="page list">Filters (key=value per line)
+        <textarea id="filters" rows="2" placeholder="item_set_id=1"></textarea></label>
+      <fieldset data-ops="page list">
+        <legend>Property condition (optional)</legend>
+        <label>Property <input id="cond-property" placeholder="dcterms:title"></label>
+        <label>Type <input id="cond-type" value="eq"></label>
+        <label>Value <input id="cond-value"></label>
+      </fieldset>
+      <label data-ops="list"><input id="verify" type="checkbox"> Verify</label>
+      <label data-ops="list">Expected IDs (comma list) <input id="expected_ids" placeholder="1,2,3"></label>
+      <label data-ops="create patch upload">Payload (JSON)
+        <textarea id="payload" rows="6">{"dcterms:title": [{"type": "literal", "property_id": 1, "@value": "New item"}]}</textarea></label>
+      <label data-ops="patch"><input id="replace_rdf_values" type="checkbox"> Replace RDF values</label>
+      <label data-ops="upload">Filename <input id="filename" value="note.txt"></label>
+      <label data-ops="upload">Text <textarea id="text" rows="2">Hello from the playground.</textarea></label>
+      <label data-ops="delete"><input id="confirm" type="checkbox"> Confirm delete</label>
+    </div>
+    <button id="run" type="submit" disabled>Run</button>
+    <button id="reset" type="button" disabled>Reset demo data</button>
+  </form>
+  <section>
+    <h2>Output</h2>
+    <div id="error" hidden></div>
+    <pre id="output"></pre>
+  </section>
+  <section>
+    <h2>Python snippet <button id="copy" type="button">Copy</button></h2>
+    <pre id="snippet"></pre>
+  </section>
+  <section>
+    <h2>Requests</h2>
+    <ul id="requests"></ul>
+    <h2>Warnings</h2>
+    <ul id="warnings"></ul>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

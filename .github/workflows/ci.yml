@@ -65,13 +65,32 @@ jobs:
           "$mcp/bin/omeka-s" --help
           "$mcp/bin/omeka-s-mcp" --help
 
+  playground:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.13.9"
+          python-version: "3.13"
+      - run: uv build
+      - run: sh playground/build.sh
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - run: npm install --no-save pyodide@314.0.8
+      - run: node playground/smoke.mjs
+
   quality-gate:
     name: quality-gate
     runs-on: ubuntu-latest
     if: ${{ always() }}
-    needs: [test, package]
+    needs: [test, package, playground]
     steps:
       - env:
           TEST: ${{ needs.test.result }}
           PACKAGE: ${{ needs.package.result }}
-        run: test "$TEST" = success && test "$PACKAGE" = success
+          PLAYGROUND: ${{ needs.playground.result }}
+        run: test "$TEST" = success && test "$PACKAGE" = success && test "$PLAYGROUND" = success

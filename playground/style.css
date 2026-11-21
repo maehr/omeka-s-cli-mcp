@@ -1,0 +1,10 @@
+body{font-family:system-ui,sans-serif;max-width:52rem;margin:0 auto;padding:1rem;line-height:1.4}
+label{display:block;margin:.4rem 0}
+input:not([type=checkbox]):not([type=radio]),textarea,select{display:block;width:100%;box-sizing:border-box;font:inherit}
+label:has(input[type=radio]){display:inline-block;margin-right:1rem}
+fieldset{margin:.6rem 0}
+pre{background:#f4f4f4;padding:.6rem;overflow:auto;white-space:pre-wrap}
+.note{font-size:.9em;color:#555}
+#error{border:2px solid #b00020;background:#fdecea;padding:.6rem;margin-bottom:.6rem}
+[hidden]{display:none!important}
+@media (prefers-color-scheme:dark){body{background:#181818;color:#eee}pre{background:#262626}#error{background:#3a1b1b}a{color:#8ab4f8}.note{color:#aaa}}
