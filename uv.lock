@@ -4,8 +4,8 @@ requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
     "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version < '3.12' or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten')",
 ]
 
@@ -1145,9 +1145,17 @@ name = "omeka-s-client"
 version = "0.1.0.dev0"
 source = { editable = "." }
 dependencies = [
-    { name = "fastmcp" },
     { name = "httpx2" },
     { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+cli = [
+    { name = "pydantic-settings" },
+    { name = "typer" },
+]
+mcp = [
+    { name = "fastmcp" },
     { name = "pydantic-settings" },
     { name = "typer" },
 ]
@@ -1156,6 +1164,7 @@ dependencies = [
 dev = [
     { name = "commitizen" },
     { name = "git-cliff" },
+    { name = "omeka-s-client", extra = ["cli", "mcp"] },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1166,17 +1175,20 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastmcp", specifier = ">=4.2.3,<4.3" },
+    { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=4.2.3,<4.3" },
     { name = "httpx2", specifier = ">=2.16,<3" },
+    { name = "omeka-s-client", extras = ["cli"], marker = "extra == 'mcp'" },
     { name = "pydantic", specifier = ">=2.12,<3" },
-    { name = "pydantic-settings", specifier = ">=2.6,<3" },
-    { name = "typer", specifier = ">=0.29,<1" },
+    { name = "pydantic-settings", marker = "extra == 'cli'", specifier = ">=2.6,<3" },
+    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.29,<1" },
 ]
+provides-extras = ["cli", "mcp"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "commitizen", specifier = "==4.19.4" },
     { name = "git-cliff", specifier = "==2.14.2" },
+    { name = "omeka-s-client", extras = ["cli", "mcp"] },
     { name = "prek", specifier = "==0.5.11" },
     { name = "pytest", specifier = "==9.2.0" },
     { name = "pytest-asyncio", specifier = "==1.5.0" },

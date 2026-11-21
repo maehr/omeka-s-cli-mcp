@@ -78,7 +78,9 @@ def is_key(encoded_name: str) -> bool:
 def without_keys(url: httpx2.URL) -> httpx2.URL:
     # Preserve the encoding of other parameters, including signed download URLs.
     query = b"&".join(
-        pair for pair in url.query.split(b"&") if not is_key(pair.split(b"=", 1)[0].decode())
+        pair
+        for pair in url.query.split(b"&")
+        if not is_key(pair.split(b"=", 1)[0].decode("utf-8", errors="replace"))
     )
     if query == url.query:
         return url

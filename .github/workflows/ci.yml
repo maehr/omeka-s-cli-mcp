@@ -44,11 +44,26 @@ jobs:
           version: "0.13.9"
           python-version: "3.11"
       - run: uv build
-      - run: uv venv "${RUNNER_TEMP}/omeka-wheel"
-      - run: uv pip install --python "${RUNNER_TEMP}/omeka-wheel/bin/python" dist/*.whl
-      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/python" -I -c "import omeka_s_client"'
-      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/omeka-s" --help'
-      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/omeka-s-mcp" --help'
+      - name: Check optional dependencies
+        run: |
+          wheel=$(printf '%s' dist/*.whl)
+          core="${RUNNER_TEMP}/omeka-core"
+          cli="${RUNNER_TEMP}/omeka-cli"
+          mcp="${RUNNER_TEMP}/omeka-mcp"
+
+          uv venv "$core"
+          uv pip install --python "$core/bin/python" "$wheel"
+          "$core/bin/python" -I -c 'import omeka_s_client; from importlib.util import find_spec; assert all(find_spec(name) is None for name in ("typer", "pydantic_settings", "fastmcp"))'
+
+          uv venv "$cli"
+          uv pip install --python "$cli/bin/python" "${wheel}[cli]"
+          "$cli/bin/omeka-s" --help
+          "$cli/bin/python" -I -c 'from importlib.util import find_spec; assert find_spec("fastmcp") is None'
+
+          uv venv "$mcp"
+          uv pip install --python "$mcp/bin/python" "${wheel}[mcp]"
+          "$mcp/bin/omeka-s" --help
+          "$mcp/bin/omeka-s-mcp" --help
 
   quality-gate:
     name: quality-gate
