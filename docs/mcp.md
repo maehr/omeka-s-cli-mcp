@@ -1,17 +1,19 @@
 # Omeka S Client MCP server
 
-Run `omeka-s-mcp` to start the server on standard input and output. `omeka-s mcp` starts the same server. Both commands read the `OMEKA_URL`, `OMEKA_KEY_IDENTITY`, `OMEKA_KEY_CREDENTIAL`, and `OMEKA_TIMEOUT` settings.
+Install Omeka S Client in a virtual environment. [Installation](../README.md#install-the-prototype)
+
+Replace the example executable path with the absolute path to your `omeka-s-mcp` executable. On Windows, find `omeka-s-mcp.exe` in the virtual environment's `Scripts` directory.
 
 ## Claude Code
 
-Use the installation URL in your command. For a public installation, add this server.
+Set `OMEKA_URL` to your Omeka installation URL.
 
 ```sh
 claude mcp add --transport stdio omeka-s --env OMEKA_URL=https://example.org -- \
-  uvx --from git+https://github.com/maehr/omeka-s-client omeka-s-mcp
+  /path/to/venv/bin/omeka-s-mcp
 ```
 
-For authenticated access, configure both Omeka key variables in the client's environment settings. Use a private client configuration file for the credential.
+For authenticated access, set both Omeka key variables in the client environment. Keep the credential in a private configuration file.
 
 ## Claude Desktop
 
@@ -21,15 +23,14 @@ Set each configuration variable in the `env` object. Claude Desktop starts the s
 {
   "mcpServers": {
     "omeka-s": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/maehr/omeka-s-client", "omeka-s-mcp"],
+      "command": "/path/to/venv/bin/omeka-s-mcp",
       "env": {"OMEKA_URL": "https://example.org"}
     }
   }
 }
 ```
 
-If the client cannot find `uvx`, use its absolute path.
+The server uses standard input and output by default. The `omeka-s mcp` command starts the same server. Both commands read `OMEKA_URL`, `OMEKA_KEY_IDENTITY`, `OMEKA_KEY_CREDENTIAL`, and `OMEKA_TIMEOUT`.
 
 ## Tools
 
