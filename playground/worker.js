@@ -7,7 +7,11 @@ const ready = (async () => {
   const pyodide = await loadPyodide();
   status("Installing omeka_s_client...");
   await pyodide.loadPackage("micropip");
-  const wheel = (await (await fetch("wheel.txt")).text()).trim();
+  const res = await fetch("wheel.txt");
+  const wheel = res.ok ? (await res.text()).trim() : "";
+  if (!wheel.endsWith(".whl")) {
+    throw new Error("wheel.txt is missing. Run uv build && sh playground/build.sh, then serve _site, not playground/.");
+  }
   await pyodide.pyimport("micropip").install(new URL(wheel, self.location).href);
   const src = await (await fetch("playground.py")).text();
   pyodide.FS.mkdirTree("/home/pyodide");
