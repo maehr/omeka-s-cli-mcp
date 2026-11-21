@@ -1,17 +1,19 @@
-# MCP server
+# Omeka S Client MCP server
 
-Run `omeka-s-mcp` to start the server on standard input and output. `omeka-s mcp` starts the same server. Both commands read the `OMEKA_URL`, `OMEKA_KEY_IDENTITY`, `OMEKA_KEY_CREDENTIAL`, and `OMEKA_TIMEOUT` settings.
+Install Omeka S Client in a virtual environment. [Installation](../README.md#install-the-prototype)
+
+Replace the example executable path with the absolute path to your `omeka-s-mcp` executable. On Windows, find `omeka-s-mcp.exe` in the virtual environment's `Scripts` directory.
 
 ## Claude Code
 
-Use the installation URL in your command. For a public installation, add this server.
+Set `OMEKA_URL` to your Omeka installation URL.
 
 ```sh
 claude mcp add --transport stdio omeka-s --env OMEKA_URL=https://example.org -- \
-  uvx --from git+https://github.com/maehr/omeka-s-cli-mcp omeka-s-mcp
+  /path/to/venv/bin/omeka-s-mcp
 ```
 
-For authenticated access, configure both Omeka key variables in the client's environment settings. Use a private client configuration file for the credential.
+For authenticated access, set both Omeka key variables in the client environment. Keep the credential in a private configuration file.
 
 ## Claude Desktop
 
@@ -21,29 +23,28 @@ Set each configuration variable in the `env` object. Claude Desktop starts the s
 {
   "mcpServers": {
     "omeka-s": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/maehr/omeka-s-cli-mcp", "omeka-s-mcp"],
+      "command": "/path/to/venv/bin/omeka-s-mcp",
       "env": {"OMEKA_URL": "https://example.org"}
     }
   }
 }
 ```
 
-If the client cannot find `uvx`, use its absolute path.
+The server uses standard input and output by default. The `omeka-s mcp` command starts the same server. Both commands read `OMEKA_URL`, `OMEKA_KEY_IDENTITY`, `OMEKA_KEY_CREDENTIAL`, and `OMEKA_TIMEOUT`.
 
 ## Tools
 
 | Tool | Operation |
 | --- | --- |
-| `omeka_api_resources` | Read available resources |
-| `omeka_get` | Read a record by ID |
-| `omeka_search` | Read one page, with up to 100 requested records |
-| `omeka_find_by_property` | Read by property term or ID |
-| `omeka_list_all` | Read a listing up to `OMEKA_MCP_MAX_RECORDS`, which defaults to 500 |
+| `omeka_list_api_resources` | Read available resources |
+| `omeka_get_record` | Read a record by ID |
+| `omeka_list_records_page` | Read one page, with up to 100 requested records |
+| `omeka_find_records_by_property` | Read by property term or ID |
+| `omeka_list_all_records` | Read a listing up to `OMEKA_MCP_MAX_RECORDS`, which defaults to 500 |
 | `omeka_capture_snapshot` | Write a snapshot in the work directory |
-| `omeka_download` | Download a file to the work directory |
-| `omeka_create` | Preview or create an Omeka record |
-| `omeka_patch` | Preview or update an Omeka record |
+| `omeka_download_file` | Download a file to the work directory |
+| `omeka_create_record` | Preview or create an Omeka record |
+| `omeka_patch_record` | Preview or update an Omeka record |
 
 Use the resource template `omeka://{resource}/{id}` to read a record as an MCP resource.
 
@@ -54,3 +55,21 @@ Set `OMEKA_MCP_WORKDIR` to an existing private directory to enable snapshot capt
 Use `omeka-s-mcp --transport http` for HTTP transport. The default endpoint is `http://127.0.0.1:8000/mcp`. Keep the HTTP binding on loopback because the transport has no authentication.
 
 [Claude Code MCP configuration](https://code.claude.com/docs/en/mcp)
+
+## Migrate existing MCP clients
+
+The server now reports the name **Omeka S Client**. Update tool calls and allowlists to use the names below. Replace each argument shown in the last column.
+
+| Previous tool | Current tool | Argument change |
+| --- | --- | --- |
+| `omeka_api_resources` | `omeka_list_api_resources` | |
+| `omeka_get` | `omeka_get_record` | `id` becomes `record_id` |
+| `omeka_search` | `omeka_list_records_page` | |
+| `omeka_find_by_property` | `omeka_find_records_by_property` | `type` becomes `comparison` |
+| `omeka_list_all` | `omeka_list_all_records` | |
+| `omeka_capture_snapshot` | `omeka_capture_snapshot` | `name` becomes `directory` |
+| `omeka_download` | `omeka_download_file` | `name` becomes `destination` |
+| `omeka_create` | `omeka_create_record` | |
+| `omeka_patch` | `omeka_patch_record` | `id` becomes `record_id` |
+
+Reconnect the MCP client to refresh its tool list.
