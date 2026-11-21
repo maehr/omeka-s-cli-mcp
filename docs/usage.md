@@ -79,4 +79,8 @@ The capture checks item membership and media relationships across requests. Conc
 
 Pass a callable as `transport`. Receive a `TransportRequest` and return a `TransportResponse`. Use `omeka_s_client.testing.FakeOmeka` for basic in-memory record operations and pagination.
 
+Pass uploads to `create` to test multipart requests. The fake stores the JSON record from the multipart request and skips file storage.
+
+Use `eq` with a property term to search JSON-LD values. The fake uses case-sensitive comparisons for literal text and URIs. Combine clauses with `and` or `or`. The fake ignores numeric property IDs and other comparison types.
+
 [Omeka S REST API reference](https://omeka.org/s/docs/developer/api/rest_api/)

@@ -28,7 +28,8 @@ def settings(**options: Any) -> McpSettings:
 
 
 async def test_mcp_read_tools_and_template() -> None:
-    fake = FakeOmeka({"items": [{"o:id": 1}, {"o:id": 2}]})
+    match = {"o:id": 2, "dcterms:identifier": [{"@value": "abc"}]}
+    fake = FakeOmeka({"items": [{"o:id": 1}, match]})
     server = build_server(
         settings(mcp_allow_writes=False, mcp_workdir=None, mcp_max_records=1), transport=fake
     )
@@ -70,7 +71,7 @@ async def test_mcp_read_tools_and_template() -> None:
                 },
             )
         ).data
-        assert page["records"] == [{"o:id": 2}] and page["total"] == 2
+        assert page["records"] == [match] and page["total"] == 2
         assert not page["has_next"]
         found = await client.call_tool(
             "omeka_find_records_by_property",
@@ -81,7 +82,7 @@ async def test_mcp_read_tools_and_template() -> None:
                 "value": "abc",
             },
         )
-        assert found.data == {"records": [{"o:id": 1}, {"o:id": 2}]}
+        assert found.data == {"records": [match]}
         property_query = parse_qs(urlsplit(fake.requests[-1].url).query)
         assert property_query["property[0][type]"] == ["eq"]
         assert property_query["property[0][text]"] == ["abc"]
