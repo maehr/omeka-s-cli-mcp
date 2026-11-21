@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import secrets
 from collections.abc import Callable, Generator, Iterable, Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -13,7 +14,7 @@ from typing import BinaryIO, TypeVar
 
 import httpx2
 
-from ._urls import add_query, http_url, is_key, under_root, without_keys
+from ._urls import NONCE, add_query, http_url, is_key, under_root, without_keys
 from .errors import (
     InvalidResponseError,
     OmekaConnectionError,
@@ -122,7 +123,9 @@ class HTTP:
         transport: Transport | None,
         retries: int,
         sleep: Callable[[float], None],
+        cache_busting: bool = False,
     ) -> None:
+        self._cache_busting = cache_busting
         self.root = httpx2.URL(root)
         self._keys = keys
         self._retries = retries
@@ -182,8 +185,13 @@ class HTTP:
                 raise UnsafeRedirectError(
                     "Request target leaves the Omeka API root.", operation=method, resource=resource
                 )
-            outgoing = add_query(url, self._keys) if api and self._keys else url
-            with client.stream(method, outgoing, json=json, data=data, files=files) as response:
+            bust = self._cache_busting and api and method == "GET"
+            pairs = [*self._keys, (NONCE, secrets.token_hex(8))] if bust else self._keys
+            outgoing = add_query(url, pairs) if api and pairs else url
+            headers = {"Pragma": "no-cache"} if bust else None
+            with client.stream(
+                method, outgoing, headers=headers, json=json, data=data, files=files
+            ) as response:
                 location = response.headers.get("location")
                 if (
                     method == "GET"
