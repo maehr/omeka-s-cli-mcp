@@ -279,6 +279,8 @@ class OmekaClient:
                 )
             if verify:
                 _listing.verified_ids(page.records, ids, total)
+                if total is None and expected is not None and not ids <= expected:
+                    _listing.verify_end(ids, total, expected)
             records.extend(page.records)
             target = self._next_link(page, resource, pairs) if page.next_link is not None else None
             if target is not None and _listing.page_key(target) in visited:
@@ -289,9 +291,8 @@ class OmekaClient:
                 url = target
                 continue
             limit = total if verify else page.total
-            if limit is None and expected is not None:
-                limit = len(expected)
-            if limit is None or len(records) >= limit:
+            unbounded = verify and total is None and expected is not None
+            if not unbounded and (limit is None or len(records) >= limit):
                 break
             try:
                 next_page = int(page.url.params.get("page", "1")) + 1

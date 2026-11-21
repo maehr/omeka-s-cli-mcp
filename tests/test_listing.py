@@ -248,12 +248,25 @@ def test_nonce_is_a_reserved_filter() -> None:
 
 
 def test_expected_ids_enable_verification_without_count() -> None:
-    responses = deque([page([5]), page([8])])
+    responses = deque([page([5]), page([8]), page([])])
     with OmekaClient("https://example.org", transport=lambda _: responses.popleft()) as client:
         assert client.list("items", per_page=1, expected_ids=iter([8, 5])) == [
             {"o:id": 5},
             {"o:id": 8},
         ]
+    assert not responses
+
+
+def test_expected_ids_reject_unexpected_later_page() -> None:
+    sequence = deque([page([1]), page([2]), page([3])] * 3)
+    with (
+        OmekaClient(
+            "https://example.org", transport=lambda _: sequence.popleft(), sleep=lambda _: None
+        ) as client,
+        pytest.raises(IncompleteListingError, match=r"Unexpected examples: \[3\]"),
+    ):
+        client.list("items", per_page=1, expected_ids={1, 2})
+    assert not sequence
 
 
 def test_expected_ids_must_match_even_when_counts_match() -> None:
