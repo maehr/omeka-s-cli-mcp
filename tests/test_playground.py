@@ -63,6 +63,12 @@ def test_seed_and_reset() -> None:
     assert len(demo.fake.records["items"]) == 12
 
 
+def test_media_list_verifies() -> None:
+    out = run("list", {"resource": "media", "verify": True})
+    assert [m["o:id"] for m in out["result"]] == [1, 2, 3, 4]
+    assert run("get", {"resource": "media", "id": 4})["result"]["o:item"] == {"o:id": 3}
+
+
 def test_get_page_list() -> None:
     out = run("get", {"id": 3})
     assert out["result"]["o:id"] == 3
@@ -188,6 +194,7 @@ def test_live_reads() -> None:
 def test_live_errors() -> None:
     out = live("get", Sender(error=OSError("blocked")), {"id": 1})
     assert not out["ok"] and out["error"] == "OmekaConnectionError"
+    assert "Access-Control-Allow-Origin" in out["message"]
     out = live("get", Sender(error=OSError()), {"id": 1})
     assert not out["ok"]
     assert live("get", Sender(status=404, body={}), {"id": 9})["status"] == 404

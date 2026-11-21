@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from omeka_s_client import (
     OmekaClient,
+    OmekaConnectionError,
     OmekaError,
     Upload,
     property_filter,
@@ -154,7 +155,10 @@ def seed() -> FakeOmeka:
                 "dcterms:identifier": _values(f"letter-{number:03d}", 10),
             }
         )
-    media = [{"o:id": n, "o:item": {"o:id": n}, "o:source": f"scan-{n}.jpg"} for n in (1, 2, 3, 3)]
+    media = [
+        {"o:id": n, "o:item": {"o:id": item}, "o:source": f"scan-{n}.jpg"}
+        for n, item in enumerate((1, 2, 3, 3), start=1)
+    ]
     sets = [{"o:id": n, "o:title": f"Collection {n}"} for n in (1, 2)]
     return FakeOmeka({"items": items, "media": media, "item_sets": sets})
 
@@ -396,10 +400,16 @@ def run_json(payload_json: str, demo: Demo, send: Callable[..., Any] | None = No
         out: dict[str, Any] = {"ok": True, "result": result}
     except (OmekaError, ValueError) as error:
         status = getattr(error, "status", None)
+        message = _message(error)
+        if live is not None and isinstance(error, OmekaConnectionError):
+            message += (
+                " The browser blocked the request, or the host is unreachable."
+                " The server must send Access-Control-Allow-Origin."
+            )
         out = {
             "ok": False,
             "error": type(error).__name__,
-            "message": _message(error),
+            "message": message,
             "status": status,
         }
     out |= {"snippet": code, "warnings": warnings}

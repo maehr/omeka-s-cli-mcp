@@ -17,6 +17,7 @@ const cases = [
   ["get", { resource: "items", id: 1 }, true],
   ["page", { resource: "items", page: 1, per_page: 5, filters: [["item_set_id", "1"]], conditions: [prop] }, true],
   ["list", { resource: "items", per_page: 5, verify: true, expected_ids: Array.from({ length: 12 }, (_, i) => i + 1) }, true],
+  ["list", { resource: "media", verify: true }, true],
   ["create", { resource: "items", payload: { "dcterms:title": title } }, true],
   ["patch", { resource: "items", id: 1, payload: { "dcterms:title": title }, replace_rdf_values: true }, true],
   ["delete", { resource: "items", id: 2, confirm: true }, true],
