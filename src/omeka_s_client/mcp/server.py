@@ -83,7 +83,7 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
     """Build a FastMCP server with a client shared by its tools.
 
     >>> build_server(McpSettings(url="https://example.org")).name
-    'Omeka S'
+    'Omeka S Client'
     """
     root = _workdir(settings.mcp_workdir)
     allow_writes = settings.mcp_allow_writes
@@ -94,12 +94,12 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
         with settings.open_client(transport=transport) as client:
             yield {"omeka": client}
 
-    server = FastMCP("Omeka S", lifespan=shared_client, mask_error_details=True)
+    server = FastMCP("Omeka S Client", lifespan=shared_client, mask_error_details=True)
     read = ToolAnnotations(read_only_hint=True)
     local = ToolAnnotations(destructive_hint=False, idempotent_hint=False)
 
     @server.tool(tags={"read"}, annotations=read)
-    def omeka_api_resources(ctx: Context) -> dict[str, list[Record]]:
+    def omeka_list_api_resources(ctx: Context) -> dict[str, list[Record]]:
         """Read the API resource list."""
         with _api(ctx) as client:
             return {"records": client.page("api_resources").records}
@@ -107,13 +107,13 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
     @server.tool(
         tags={"read"}, annotations=ToolAnnotations(read_only_hint=True, idempotent_hint=True)
     )
-    def omeka_get(ctx: Context, resource: str, id: Positive) -> Record:
+    def omeka_get_record(ctx: Context, resource: str, record_id: Positive) -> Record:
         """Read a record by ID."""
         with _api(ctx) as client:
-            return client.get(resource, id)
+            return client.get(resource, record_id)
 
     @server.tool(tags={"read"}, annotations=read)
-    def omeka_search(
+    def omeka_list_records_page(
         ctx: Context,
         resource: str,
         filters: ReadFilters | None = None,
@@ -126,16 +126,20 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
             return asdict(client.page(resource, filters=query, page=page, per_page=per_page))
 
     @server.tool(tags={"read"}, annotations=read)
-    def omeka_find_by_property(
-        ctx: Context, resource: str, property: str | int, type: str, value: str | int | None = None
+    def omeka_find_records_by_property(
+        ctx: Context,
+        resource: str,
+        property: str | int,
+        comparison: str,
+        value: str | int | None = None,
     ) -> dict[str, list[Record]]:
         """Find records with an Omeka property filter."""
-        filters = property_filters(property_filter(property, type, value))
+        filters = property_filters(property_filter(property, comparison, value))
         with _api(ctx) as client:
             return {"records": client.list(resource, filters=filters)}
 
     @server.tool(tags={"read"}, annotations=read)
-    def omeka_list_all(
+    def omeka_list_all_records(
         ctx: Context, resource: str, filters: ReadFilters | None = None, verify: bool = False
     ) -> dict[str, list[Record]]:
         """Read all pages up to the server's record limit."""
@@ -151,32 +155,34 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
         return {"records": records}
 
     @server.tool(tags={"local-write"}, annotations=local)
-    def omeka_capture_snapshot(ctx: Context, item_set_id: Positive, name: str) -> dict[str, Any]:
+    def omeka_capture_snapshot(
+        ctx: Context, item_set_id: Positive, directory: str
+    ) -> dict[str, Any]:
         """Capture an item set in a new snapshot directory."""
-        destination = _workspace_path(root, name)
+        destination = _workspace_path(root, directory)
         with _api(ctx) as client:
             snapshot = capture_snapshot(client, item_set_id)
             write_snapshot(destination, snapshot)
         return {
-            "name": name,
+            "name": directory,
             "item_set_id": snapshot.item_set_id,
             "items_count": len(snapshot.items),
             "media_count": len(snapshot.media),
         }
 
     @server.tool(tags={"local-write"}, annotations=local)
-    def omeka_download(ctx: Context, url: str, name: str) -> dict[str, Any]:
+    def omeka_download_file(ctx: Context, url: str, destination: str) -> dict[str, Any]:
         """Download a file to a new path in the work directory."""
-        destination = _workspace_path(root, name)
+        path = _workspace_path(root, destination)
         with _api(ctx) as client:
-            result = client.download(url, destination)
-        return {"name": name, "size": result.size, "sha256": result.sha256}
+            result = client.download(url, path)
+        return {"name": destination, "size": result.size, "sha256": result.sha256}
 
     @server.tool(
         tags={"write"},
         annotations=ToolAnnotations(destructive_hint=False, idempotent_hint=False),
     )
-    def omeka_create(
+    def omeka_create_record(
         ctx: Context,
         resource: str,
         payload: Record,
@@ -210,10 +216,10 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
     @server.tool(
         tags={"write"}, annotations=ToolAnnotations(destructive_hint=True, idempotent_hint=False)
     )
-    def omeka_patch(
+    def omeka_patch_record(
         ctx: Context,
         resource: str,
-        id: Positive,
+        record_id: Positive,
         payload: Record,
         replace_rdf_values: StrictBool = False,
         confirm: StrictBool = False,
@@ -226,7 +232,7 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
                 "sent": False,
                 "preview": {
                     "resource": resource,
-                    "id": id,
+                    "id": record_id,
                     "payload": payload,
                     "replace_rdf_values": replace_rdf_values,
                 },
@@ -235,14 +241,14 @@ def build_server(settings: McpSettings, *, transport: Transport | None = None) -
             return {
                 "sent": True,
                 "record": client.patch(
-                    resource, id, payload, replace_rdf_values=replace_rdf_values
+                    resource, record_id, payload, replace_rdf_values=replace_rdf_values
                 ),
             }
 
     @server.resource("omeka://{resource}/{id}", mime_type="application/json", tags={"read"})
     def omeka_record(ctx: Context, resource: str, id: int) -> Record:
         """Read an Omeka record as an MCP resource."""
-        return omeka_get(ctx, resource, id)
+        return omeka_get_record(ctx, resource, id)
 
     if not allow_writes:
         server.disable(tags={"write"})

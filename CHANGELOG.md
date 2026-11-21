@@ -2,6 +2,10 @@
 ## Unreleased
 
 
+### Breaking changes
+
+- Align project and MCP naming.
+
 ### Documentation
 
 - Specify the Omeka S Python client.

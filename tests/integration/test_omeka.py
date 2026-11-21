@@ -178,7 +178,7 @@ async def test_stdio_server_reads_and_previews_and_sends_writes(instance: Instan
         },
     )
     async with Client(transport) as client:
-        discovery = await client.call_tool("omeka_api_resources")
+        discovery = await client.call_tool("omeka_list_api_resources")
         assert any(record["o:id"] == "items" for record in discovery.data["records"])
 
         args = {
@@ -188,19 +188,28 @@ async def test_stdio_server_reads_and_previews_and_sends_writes(instance: Instan
         find = {
             "resource": "items",
             "property": "dcterms:identifier",
-            "type": "eq",
+            "comparison": "eq",
             "value": "mcp-stdio-integration",
         }
-        preview = await client.call_tool("omeka_create", args)
+        preview = await client.call_tool("omeka_create_record", args)
         assert preview.data["sent"] is False
-        assert (await client.call_tool("omeka_find_by_property", find)).data["records"] == []
+        assert (await client.call_tool("omeka_find_records_by_property", find)).data[
+            "records"
+        ] == []
 
-        result = await client.call_tool("omeka_create", {**args, "confirm": True})
+        result = await client.call_tool("omeka_create_record", {**args, "confirm": True})
         id = result.data["record"]["o:id"]
         assert result.data["sent"] is True
-        fetched = await client.call_tool("omeka_get", {"resource": "items", "id": id})
+        fetched = await client.call_tool("omeka_get_record", {"resource": "items", "record_id": id})
         assert fetched.data["o:id"] == id
-        assert (await client.call_tool("omeka_search", {"resource": "items"})).data["total"] >= 1
-        listing = await client.call_tool("omeka_list_all", {"resource": "items", "verify": True})
+        assert (await client.call_tool("omeka_list_records_page", {"resource": "items"})).data[
+            "total"
+        ] >= 1
+        listing = await client.call_tool(
+            "omeka_list_all_records", {"resource": "items", "verify": True}
+        )
         assert any(record["o:id"] == id for record in listing.data["records"])
-        assert len((await client.call_tool("omeka_find_by_property", find)).data["records"]) == 1
+        assert (
+            len((await client.call_tool("omeka_find_records_by_property", find)).data["records"])
+            == 1
+        )
