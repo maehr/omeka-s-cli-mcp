@@ -1,0 +1,12 @@
+{
+  "files": {
+    "item_set": "item_set_raw.json",
+    "items": "items_raw.json",
+    "media": "media_raw.json"
+  },
+  "item_set_id": 8,
+  "items_count": 1,
+  "media_count": 1,
+  "timestamp": "20250107_123400",
+  "status": "raw"
+}

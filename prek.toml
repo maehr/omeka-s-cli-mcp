@@ -1,0 +1,47 @@
+minimum_prek_version = "0.5.11"
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "ruff-check"
+name = "Check Python lint rules"
+entry = "uv run --locked ruff check ."
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "Check Python formatting"
+entry = "uv run --locked ruff format --check ."
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "ty"
+name = "Check Python types"
+entry = "uv run --locked ty check"
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "pytest"
+name = "Run offline tests and check coverage"
+entry = "uv run --locked pytest --doctest-modules --cov --cov-fail-under=100"
+language = "system"
+pass_filenames = false
+always_run = true
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "conventional-commit"
+name = "Check the commit message"
+entry = "uv run --locked cz check --commit-msg-file"
+language = "system"
+stages = ["commit-msg"]

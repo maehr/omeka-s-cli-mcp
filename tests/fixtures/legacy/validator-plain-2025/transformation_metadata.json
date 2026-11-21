@@ -1,0 +1,14 @@
+{
+  "files": {
+    "item_set": "item_set.json",
+    "items": "items.json",
+    "media": "media.json"
+  },
+  "item_set_id": 8,
+  "items_count": 1,
+  "media_count": 1,
+  "timestamp": "20250107_123400",
+  "transformations_applied": [
+    "label"
+  ]
+}

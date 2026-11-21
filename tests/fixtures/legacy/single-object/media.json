@@ -1,0 +1,15 @@
+{
+  "@id": "https://catalog.example.org/collection/api/media/11",
+  "o:id": 11,
+  "o:item": {
+    "o:id": 9
+  },
+  "o:sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "o:size": 123,
+  "o:original_url": "https://catalog.example.org/collection/files/original/sample.png",
+  "o:lang": "de",
+  "o:alt_text": "Ein Bild",
+  "data": {
+    "format": "PNG"
+  }
+}

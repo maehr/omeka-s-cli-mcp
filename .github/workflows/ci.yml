@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        include:
+          - os: macos-latest
+            python: "3.13"
+          - os: windows-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.13.9"
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv run --locked prek run --all-files
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.13.9"
+          python-version: "3.11"
+      - run: uv build
+      - run: uv venv "${RUNNER_TEMP}/omeka-wheel"
+      - run: uv pip install --python "${RUNNER_TEMP}/omeka-wheel/bin/python" dist/*.whl
+      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/python" -I -c "import omeka_s_client"'
+      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/omeka-s" --help'
+      - run: '"${RUNNER_TEMP}/omeka-wheel/bin/omeka-s-mcp" --help'
+
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [test, package]
+    steps:
+      - env:
+          TEST: ${{ needs.test.result }}
+          PACKAGE: ${{ needs.package.result }}
+        run: test "$TEST" = success && test "$PACKAGE" = success

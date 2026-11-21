@@ -1,0 +1,25 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_DATABASE: omeka
+      MARIADB_USER: omeka
+      MARIADB_PASSWORD: omeka-disposable
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/mysql
+  omeka:
+    build:
+      context: .
+      args:
+        OMEKA_VERSION: ${OMEKA_VERSION:-3.2.3}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1::80"

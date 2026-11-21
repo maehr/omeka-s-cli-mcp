@@ -1,0 +1,7 @@
+{
+  "@id": "https://catalog.example.org/collection/api/item_sets/8",
+  "o:id": 8,
+  "o:items": {
+    "@id": "https://catalog.example.org/collection/api/items?item_set_id=8"
+  }
+}

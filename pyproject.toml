@@ -1,0 +1,81 @@
+[project]
+name = "omeka-s-client"
+version = "0.1.0.dev0"
+description = "Python client, CLI, and MCP server for the Omeka S REST API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Moritz Mähr" }]
+dependencies = [
+  "httpx2>=2.16,<3",
+  "pydantic>=2.12,<3",
+  "pydantic-settings>=2.6,<3",
+  "typer>=0.29,<1",
+  "fastmcp>=4.2.3,<4.3",
+]
+
+[project.urls]
+Repository = "https://github.com/maehr/omeka-s-cli-mcp"
+Issues = "https://github.com/maehr/omeka-s-cli-mcp/issues"
+
+[project.scripts]
+omeka-s = "omeka_s_client.cli:main"
+omeka-s-mcp = "omeka_s_client.mcp:main"
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "pytest-cov==7.1.0",
+  "pytest-asyncio==1.5.0",
+  "ruff==0.17.6",
+  "ty==0.0.107",
+  "prek==0.5.11",
+  "commitizen==4.19.4",
+  "git-cliff==2.14.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["SPECS.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["src", "tests"]
+addopts = "--doctest-modules --import-mode=importlib -m 'not integration'"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["integration: needs a disposable Omeka S instance"]
+
+[tool.coverage.run]
+branch = true
+source = ["omeka_s_client"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "pep621"
+version_scheme = "pep440"
+
+[tool.uv.build-backend]
+source-include = [
+  "CHANGELOG.md",
+  "CODE_OF_CONDUCT.md",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "cliff.toml",
+  "docs/**",
+  "prek.toml",
+  "tests/**",
+  "uv.lock",
+]
+source-exclude = ["SPECS.md"]

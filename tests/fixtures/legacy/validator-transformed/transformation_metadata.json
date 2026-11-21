@@ -1,0 +1,17 @@
+{
+  "files": {
+    "item_set": "item_set_transformed.json",
+    "items": "items_transformed.json",
+    "media": "media_transformed.json"
+  },
+  "item_set_id": 8,
+  "items_count": 1,
+  "media_count": 1,
+  "timestamp": "20250107_123400",
+  "status": "transformed",
+  "source": "https://catalog.example.org/collection",
+  "source_directory": "raw-example",
+  "transformations_applied": [
+    "label"
+  ]
+}

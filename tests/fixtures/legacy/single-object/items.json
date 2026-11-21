@@ -1,0 +1,73 @@
+{
+  "@id": "https://catalog.example.org/collection/api/items/9",
+  "o:id": 9,
+  "o:item_set": [
+    {
+      "o:id": 8
+    }
+  ],
+  "o:media": [
+    {
+      "o:id": 11
+    }
+  ],
+  "dcterms:title": [
+    {
+      "type": "literal",
+      "property_id": 1,
+      "@value": "Title"
+    },
+    {
+      "type": "literal",
+      "property_id": 1,
+      "@value": "Titel",
+      "@language": "de"
+    }
+  ],
+  "dcterms:subject": [
+    {
+      "type": "uri",
+      "@id": "https://terms.example.org/123",
+      "o:label": "Example"
+    },
+    {
+      "type": "uri",
+      "@id": "https://terms.example.org/456"
+    },
+    {
+      "type": "customvocab:14",
+      "@value": "example"
+    },
+    {
+      "type": "valuesuggest:lc:iso6392",
+      "@id": "https://id.loc.gov/vocabulary/iso639-2/ger"
+    },
+    {
+      "type": "resource:item",
+      "value_resource_id": 3
+    },
+    {
+      "type": "literal",
+      "@value": "Annotated",
+      "@annotation": {
+        "dcterms:title": [
+          {
+            "@value": "Note"
+          }
+        ]
+      }
+    }
+  ],
+  "o-module-mapping:marker": [
+    {
+      "o:id": 123
+    }
+  ],
+  "x-custom": {
+    "preserve": [
+      null,
+      false,
+      5.5
+    ]
+  }
+}
