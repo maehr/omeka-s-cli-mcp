@@ -13,6 +13,16 @@ from .types import QueryParams, Scalar
 
 KEYS = frozenset({"key_identity", "key_credential"})
 PAGINATION = frozenset({"page", "per_page"})
+_RESOURCE = re.compile(r"[A-Za-z0-9_-]+")
+
+
+def validate_resource_name(resource: str) -> None:
+    """Check that a resource name is a single API path segment.
+
+    >>> validate_resource_name("item_sets")
+    """
+    if not isinstance(resource, str) or not _RESOURCE.fullmatch(resource):
+        raise ConfigurationError("Invalid Omeka resource name.")
 
 
 def _has_userinfo(url: httpx2.URL) -> bool:

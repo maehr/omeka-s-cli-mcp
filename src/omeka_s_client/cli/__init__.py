@@ -30,6 +30,7 @@ from .. import (
     read_snapshot,
     write_snapshot,
 )
+from .._urls import validate_resource_name
 from ..snapshots import Variant
 from .settings import OmekaSettings
 
@@ -269,6 +270,31 @@ def build_app(*, transport: Transport | None = None) -> typer.Typer:
                 )
             else:
                 _output(client.patch(resource, id, record, replace_rdf_values=replace_rdf_values))
+
+    @app.command(help="Preview or permanently delete one record.")
+    def delete(
+        ctx: typer.Context,
+        resource: str,
+        id: _ID,
+        dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview the target.")] = False,
+        confirm: Annotated[bool, typer.Option("--confirm", help="Send the request.")] = False,
+    ) -> None:
+        if dry_run and confirm:
+            _exit("Choose --dry-run or --confirm.", 2)
+        with _errors(), _options(ctx).client() as client:
+            if confirm:
+                client.delete(resource, id)
+            else:
+                validate_resource_name(resource)
+            _output(
+                {
+                    "sent": confirm,
+                    "method": "DELETE",
+                    "resource": resource,
+                    "id": id,
+                    "installation_url": client.installation_url,
+                }
+            )
 
     @app.command(help="Download a file to a new destination.")
     def download(ctx: typer.Context, url: str, dest: Path) -> None:

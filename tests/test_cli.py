@@ -169,6 +169,45 @@ def test_cli_create_patch_dry_run_and_snapshot(
         assert check.exit_code == 0 and json.loads(check.stdout)["media_count"] == 0
 
 
+def test_cli_delete_requires_confirmation(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = FakeOmeka({"items": [{"o:id": 1}, {"o:id": 2}]})
+    app = build_app(transport=fake)
+    monkeypatch.setenv("OMEKA_URL", "https://example.org/collection/api/")
+    monkeypatch.setenv("OMEKA_KEY_IDENTITY", "key-id")
+    monkeypatch.setenv("OMEKA_KEY_CREDENTIAL", "secret")
+    args = ["delete", "items", "1"]
+    target = {
+        "method": "DELETE",
+        "resource": "items",
+        "id": 1,
+        "installation_url": "https://example.org/collection",
+    }
+    for flags in ([], ["--dry-run"]):
+        preview = runner.invoke(app, [*args, *flags])
+        assert preview.exit_code == 0, preview.output
+        assert json.loads(preview.stdout) == {"sent": False, **target}
+    for invalid_args in (
+        [*args, "--dry-run", "--confirm"],
+        [*args, "--confirm", "--dry-run"],
+        ["delete", "items", "0", "--confirm"],
+        ["delete", "items/1", "1", "--dry-run"],
+    ):
+        invalid = runner.invoke(app, invalid_args)
+        assert invalid.exit_code == 2, invalid.output
+        assert not invalid.stdout
+    assert not fake.requests
+
+    deleted = runner.invoke(app, [*args, "--confirm"])
+    assert deleted.exit_code == 0, deleted.output
+    assert json.loads(deleted.stdout) == {"sent": True, **target}
+    assert fake.records["items"] == [{"o:id": 2}]
+    assert [request.method for request in fake.requests] == ["DELETE"]
+
+    missing = runner.invoke(app, [*args, "--confirm"])
+    assert missing.exit_code == 1 and "404" in missing.stderr
+    assert not missing.stdout and "secret" not in missing.stderr
+
+
 def test_cli_errors_have_expected_exit_codes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -177,7 +216,7 @@ def test_cli_errors_have_expected_exit_codes(
     payload.write_text("{}")
 
     def transport(request: TransportRequest) -> TransportResponse:
-        if request.method == "POST":
+        if request.method in {"POST", "DELETE"}:
             raise ResponseLost(request.url)
         if request.url.split("?")[0].endswith("/items"):
             return TransportResponse(200, content=b'[{"o:id": 1}]')
@@ -187,6 +226,7 @@ def test_cli_errors_have_expected_exit_codes(
     cases = [
         (["list", "items", "--verify"], 3, "verification"),
         (["create", "items", "--payload", str(payload)], 4, "unknown"),
+        (["delete", "items", "1", "--confirm"], 4, "unknown"),
         (["get", "items", "1"], 1, "404"),
         (["list", "items", "--filter", "invalid"], 2, "KEY=VALUE"),
         (["snapshot", "capture", "1", str(tmp_path / "x"), "--variant", "invalid"], 2, "variant"),

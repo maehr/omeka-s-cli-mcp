@@ -9,7 +9,6 @@ import json
 import math
 import mimetypes
 import os
-import re
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -22,7 +21,7 @@ import httpx2
 
 from . import _listing
 from ._http import HTTP, FilePart
-from ._urls import add_query, http_url, installation_url, query_pairs
+from ._urls import add_query, http_url, installation_url, query_pairs, validate_resource_name
 from .errors import (
     ConfigurationError,
     DownloadError,
@@ -35,7 +34,6 @@ from .errors import (
 from .transport import Transport
 from .types import DownloadResult, Page, QueryParams, Record, Upload
 
-_RESOURCE = re.compile(r"[A-Za-z0-9_-]+")
 _NO_LINK = {errno.ENOTSUP, errno.EOPNOTSUPP, errno.ENOSYS, errno.EPERM}
 
 
@@ -102,8 +100,7 @@ class OmekaClient:
         self.close()
 
     def _endpoint(self, resource: str, id: int | None = None) -> httpx2.URL:
-        if not isinstance(resource, str) or not _RESOURCE.fullmatch(resource):
-            raise ConfigurationError("Invalid Omeka resource name.")
+        validate_resource_name(resource)
         suffix = resource if id is None else f"{resource}/{id}"
         return self._http.root.join(suffix)
 
@@ -374,6 +371,18 @@ class OmekaClient:
             )
         response = self._http.write("PATCH", url, resource, json=dict(payload))
         return _listing.record_from(response, "PATCH", resource)
+
+    def delete(self, resource: str, id: int) -> None:
+        """Permanently delete one record by positive integer ID.
+
+        >>> from omeka_s_client.testing import FakeOmeka
+        >>> fake = FakeOmeka({"items": [{"o:id": 1}]})
+        >>> with OmekaClient("https://example.org", transport=fake) as client:
+        ...     print(client.delete("items", 1))
+        None
+        """
+        _require_positive(id, "ID")
+        self._http.write("DELETE", self._endpoint(resource, id), resource)
 
     def download(self, url: str, destination: str | os.PathLike[str]) -> DownloadResult:
         """Stream a file to a new path and return its size and SHA-256 digest.
