@@ -50,7 +50,6 @@ build-backend = "uv_build"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = ["SPECS.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
@@ -86,4 +85,3 @@ source-include = [
   "tests/**",
   "uv.lock",
 ]
-source-exclude = ["SPECS.md"]
