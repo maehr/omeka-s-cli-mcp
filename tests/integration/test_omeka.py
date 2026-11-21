@@ -94,6 +94,9 @@ def test_paginated_snapshot_and_write_semantics(
         assert [
             record["o:id"] for record in public.list("items", filters=filters, per_page=1)
         ] == ids
+    with OmekaClient(url, max_retries=0, cache_busting=True) as busted:
+        listed = busted.list("items", filters=filters, per_page=1, verify=True)
+        assert [record["o:id"] for record in listed] == ids
     with (
         caplog.at_level(logging.DEBUG, logger="httpx2"),
         caplog.at_level(logging.DEBUG, logger="httpcore2"),
