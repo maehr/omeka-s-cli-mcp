@@ -1,6 +1,6 @@
 # Omeka S Client MCP server
 
-Install Omeka S Client in a virtual environment. [Installation](../README.md#install-the-prototype)
+Install Omeka S Client with the `[mcp]` extra in a virtual environment. [Installation](../README.md#install-the-prototype)
 
 Replace the example executable path with the absolute path to your `omeka-s-mcp` executable. On Windows, find `omeka-s-mcp.exe` in the virtual environment's `Scripts` directory.
 
