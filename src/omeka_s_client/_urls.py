@@ -12,6 +12,7 @@ from .errors import ConfigurationError
 from .types import QueryParams, Scalar
 
 KEYS = frozenset({"key_identity", "key_credential"})
+NONCE = "omeka_s_client_nonce"
 PAGINATION = frozenset({"page", "per_page"})
 _RESOURCE = re.compile(r"[A-Za-z0-9_-]+")
 
@@ -85,12 +86,19 @@ def is_key(encoded_name: str) -> bool:
     return _parameter_name(unquote_plus(encoded_name)) in KEYS
 
 
+def _is_nonce(encoded_name: str) -> bool:
+    return _parameter_name(unquote_plus(encoded_name)) == NONCE
+
+
 def without_keys(url: httpx2.URL) -> httpx2.URL:
     # Preserve the encoding of other parameters, including signed download URLs.
     query = b"&".join(
         pair
         for pair in url.query.split(b"&")
-        if not is_key(pair.split(b"=", 1)[0].decode("utf-8", errors="replace"))
+        if not (
+            is_key(name := pair.split(b"=", 1)[0].decode("utf-8", errors="replace"))
+            or _is_nonce(name)
+        )
     )
     if query == url.query:
         return url
@@ -103,7 +111,7 @@ def query_pairs(filters: QueryParams | None, *, verify: bool) -> list[tuple[str,
         if isinstance(filters, Mapping)
         else list(filters or ())
     )
-    reserved = KEYS | PAGINATION
+    reserved = KEYS | PAGINATION | {NONCE}
     if verify:
         reserved |= {"sort_by", "sort_order"}
     if any(_parameter_name(key) in reserved for key, _ in pairs):

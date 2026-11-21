@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections import deque
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qs, parse_qsl, urlsplit
 
 import pytest
 
@@ -181,9 +181,70 @@ def test_verified_listing_restarts(pages: list[TransportResponse], message: str)
 
 def test_verification_can_recover() -> None:
     sequence = deque([page([1, 1], 2), page([1, 2], 2)])
-    with OmekaClient("https://example.org", transport=lambda _: sequence.popleft()) as client:
+    waits: list[float] = []
+    with OmekaClient(
+        "https://example.org", transport=lambda _: sequence.popleft(), sleep=waits.append
+    ) as client:
         assert len(client.list("items", verify=True)) == 2
     assert not sequence
+    assert waits == [2.0]
+
+
+def test_truncated_attempt_waits_then_recovers() -> None:
+    sequence = deque([page([1, 2], 3), page([], 3), page([1, 2], 3), page([3], 3), page([], 3)])
+    waits: list[float] = []
+    with OmekaClient(
+        "https://example.org", transport=lambda _: sequence.popleft(), sleep=waits.append
+    ) as client:
+        assert len(client.list("items", per_page=2, verify=True)) == 3
+    assert waits == [2.0]
+
+
+def test_all_attempts_truncated_back_off() -> None:
+    sequence = deque([page([1, 2], 3), page([], 3)] * 3)
+    waits: list[float] = []
+    with (
+        OmekaClient(
+            "https://example.org", transport=lambda _: sequence.popleft(), sleep=waits.append
+        ) as client,
+        pytest.raises(IncompleteListingError),
+    ):
+        client.list("items", per_page=2, verify=True)
+    assert waits == [2.0, 4.0]
+
+
+def _nonce_requests(cache_busting: bool) -> list[TransportRequest]:
+    fake = FakeOmeka()
+    with OmekaClient("https://example.org", transport=fake, cache_busting=cache_busting) as client:
+        for _ in range(3):
+            client.create("items", {"dcterms:title": []})
+        fake.requests.clear()
+        assert len(client.list("items", per_page=1, verify=True)) == 3
+    return fake.requests
+
+
+def test_cache_busting_adds_fresh_nonce_and_pragma() -> None:
+    requests = _nonce_requests(True)
+    nonces = [parse_qs(urlsplit(r.url).query)["omeka_s_client_nonce"][0] for r in requests]
+    assert len(requests) > 1 and len(set(nonces)) == len(nonces)
+    assert all(r.method == "GET" for r in requests)
+    assert all(
+        {k.lower(): v for k, v in r.headers.items()}["pragma"] == "no-cache" for r in requests
+    )
+
+
+def test_cache_busting_is_off_by_default() -> None:
+    requests = _nonce_requests(False)
+    assert all("omeka_s_client_nonce" not in r.url for r in requests)
+    assert all("pragma" not in {k.lower() for k in r.headers} for r in requests)
+
+
+def test_nonce_is_a_reserved_filter() -> None:
+    with (
+        OmekaClient("https://example.org", transport=FakeOmeka()) as client,
+        pytest.raises(ConfigurationError),
+    ):
+        client.list("items", filters={"omeka_s_client_nonce": "x"})
 
 
 def test_expected_ids_enable_verification_without_count() -> None:

@@ -20,7 +20,7 @@ from typing import Any, Self
 import httpx2
 
 from . import _listing
-from ._http import HTTP, FilePart
+from ._http import HTTP, FilePart, _delay
 from ._urls import add_query, http_url, installation_url, query_pairs, validate_resource_name
 from .errors import (
     ConfigurationError,
@@ -44,6 +44,9 @@ class OmekaClient:
     >>> with OmekaClient("https://example.org/collection/api/", transport=FakeOmeka()) as client:
     ...     print(client.installation_url)
     https://example.org/collection
+
+    Set `cache_busting=True` to add a random query parameter and a `Pragma: no-cache`
+    header to each API GET request. File downloads and writes stay unchanged.
     """
 
     def __init__(
@@ -56,6 +59,7 @@ class OmekaClient:
         transport: Transport | None = None,
         max_retries: int = 3,
         sleep: Callable[[float], None] = time.sleep,
+        cache_busting: bool = False,
     ) -> None:
         self.installation_url = installation_url(base_url)
         self.api_url = self.installation_url + "/api/"
@@ -78,7 +82,7 @@ class OmekaClient:
             if key_identity is not None and key_credential is not None
             else []
         )
-        self._http = HTTP(self.api_url, keys, timeout, transport, max_retries, sleep)
+        self._http = HTTP(self.api_url, keys, timeout, transport, max_retries, sleep, cache_busting)
 
     def close(self) -> None:
         """Close the underlying API and file clients.
@@ -209,13 +213,15 @@ class OmekaClient:
         pairs = query_pairs(filters, verify=verify)
         if verify:
             pairs.extend([("sort_by", "id"), ("sort_order", order)])
-        for _ in range(3):
+        for attempt in range(3):
             try:
                 return self._collect(
                     resource, endpoint, pairs, per_page, verify, expected, max_records
                 )
             except _listing.VerificationFailure as error:
                 reason = str(error)
+                if attempt < 2:
+                    self._http._sleep(_delay(None, attempt + 1))
         raise IncompleteListingError(
             f"GET {resource} failed listing verification after three attempts. {reason}",
             operation="GET",
