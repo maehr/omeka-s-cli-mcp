@@ -60,7 +60,7 @@ class FakeOmeka:
             return _response(404, {})
         records = self.records[resource]
         if id:
-            for record in records:
+            for index, record in enumerate(records):
                 if str(record["o:id"]) == id:
                     if request.method == "GET":
                         return _response(200, record)
@@ -70,6 +70,9 @@ class FakeOmeka:
                             return _response(400, {})
                         record.update(patch)
                         return _response(200, record)
+                    if request.method == "DELETE":
+                        del records[index]
+                        return TransportResponse(204)
             return _response(404, {})
         if request.method != "GET":
             return _response(405, {})

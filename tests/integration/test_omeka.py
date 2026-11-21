@@ -12,10 +12,18 @@ from urllib.parse import parse_qs, urlsplit
 import httpx2
 import pytest
 
-from omeka_s_client import OmekaClient, Upload, capture_snapshot, property_filter, property_filters
+from omeka_s_client import (
+    OmekaClient,
+    OmekaHTTPError,
+    Upload,
+    capture_snapshot,
+    property_filter,
+    property_filters,
+)
 
 pytestmark = pytest.mark.integration
 
+_VERSIONS_WITH_DELETE_RESPONSE_BUG = {"3.2.3", "4.1.1"}
 _PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aK3sAAAAASUVORK5CYII="
 )
@@ -24,6 +32,7 @@ _PNG = base64.b64decode(
 @dataclass
 class Instance:
     url: str
+    version: str
     identity: str = field(repr=False)
     credential: str = field(repr=False)
     client: OmekaClient
@@ -41,7 +50,11 @@ def instance() -> Iterator[Instance]:
     with OmekaClient(
         url, key_identity=identity, key_credential=credential, max_retries=0
     ) as client:
-        yield Instance(url, identity, credential, client)
+        with httpx2.Client(trust_env=False) as raw:
+            response = raw.get(client.api_url + "api_resources")
+            response.raise_for_status()
+            version = response.headers["Omeka-S-Version"]
+        yield Instance(url, version, identity, credential, client)
 
 
 def literal(value: str, property_id: int) -> list[dict[str, str | int]]:
@@ -160,11 +173,28 @@ def test_paginated_snapshot_and_write_semantics(
     assert "dcterms:title" not in cleared
 
 
+def test_delete_item(instance: Instance) -> None:
+    client = instance.client
+    item = client.create("items", {"dcterms:title": literal("Delete test", 1)})
+    record_id = item["o:id"]
+    assert client.get("items", record_id)["o:id"] == record_id
+    if instance.version in _VERSIONS_WITH_DELETE_RESPONSE_BUG:
+        with pytest.raises(OmekaHTTPError) as error:
+            client.delete("items", record_id)
+        assert error.value.status == 500
+    else:
+        assert client.delete("items", record_id) is None
+    with pytest.raises(OmekaHTTPError) as missing:
+        client.get("items", record_id)
+    assert missing.value.status == 404
+
+
 async def test_stdio_server_reads_and_previews_and_sends_writes(instance: Instance) -> None:
     import sys
 
     from fastmcp import Client
     from fastmcp.client.transports import StdioTransport
+    from fastmcp.exceptions import ToolError
 
     url = instance.url
     transport = StdioTransport(
@@ -213,3 +243,17 @@ async def test_stdio_server_reads_and_previews_and_sends_writes(instance: Instan
             len((await client.call_tool("omeka_find_records_by_property", find)).data["records"])
             == 1
         )
+
+        target = {"resource": "items", "record_id": id}
+        preview = await client.call_tool("omeka_delete_record", target)
+        assert preview.data["sent"] is False
+        assert (await client.call_tool("omeka_get_record", target)).data["o:id"] == id
+        confirmed = {**target, "confirm": True}
+        if instance.version in _VERSIONS_WITH_DELETE_RESPONSE_BUG:
+            with pytest.raises(ToolError, match="DELETE items returned HTTP 500"):
+                await client.call_tool("omeka_delete_record", confirmed)
+        else:
+            deleted = await client.call_tool("omeka_delete_record", confirmed)
+            assert deleted.data == {"sent": True, "resource": "items", "id": id}
+        with pytest.raises(ToolError, match="404"):
+            await client.call_tool("omeka_get_record", target)

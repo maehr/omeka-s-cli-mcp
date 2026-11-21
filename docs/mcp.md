@@ -45,16 +45,23 @@ The server uses standard input and output by default. The `omeka-s mcp` command 
 | `omeka_download_file` | Download a file to the work directory |
 | `omeka_create_record` | Preview or create an Omeka record |
 | `omeka_patch_record` | Preview or update an Omeka record |
+| `omeka_delete_record` | Preview or permanently delete an Omeka record |
 
 Use the resource template `omeka://{resource}/{id}` to read a record as an MCP resource.
 
-Set `OMEKA_MCP_ALLOW_WRITES=true` to enable the two Omeka write tools. Review the preview. Set `confirm=true` to send the write request. To replace RDF values, also set `replace_rdf_values=true`.
+Set `OMEKA_MCP_ALLOW_WRITES=true` to enable the Omeka write tools. Review the preview. Set `confirm=true` to send the write request. To replace RDF values, also set `replace_rdf_values=true`.
 
 Set `OMEKA_MCP_WORKDIR` to an existing private directory to enable snapshot capture and downloads. Use paths relative to this directory for all local tools and uploads. Use a directory under your control. [Security](security.md)
 
 Use `omeka-s-mcp --transport http` for HTTP transport. The default endpoint is `http://127.0.0.1:8000/mcp`. Keep the HTTP binding on loopback because the transport has no authentication.
 
 [Claude Code MCP configuration](https://code.claude.com/docs/en/mcp)
+
+## Delete a record
+
+**Caution.** Check the installation, resource, and ID in the preview. Omeka S permanently deletes the record when you confirm.
+
+Enable the Omeka write tools before you call `omeka_delete_record`. To preview the request, pass `{"resource": "items", "record_id": 123}`. Add `"confirm": true` to the call arguments to send the request. Check the record before you repeat a deletion after an unknown outcome or a server error. [Write errors](security.md#writes)
 
 ## Migrate existing MCP clients
 

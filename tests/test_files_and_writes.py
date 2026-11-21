@@ -10,6 +10,7 @@ from email import policy
 from email.parser import BytesParser
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 import httpx2
 import pytest
@@ -21,6 +22,7 @@ from omeka_s_client import (
     InvalidResponseError,
     OmekaClient,
     OmekaConnectionError,
+    OmekaError,
     OmekaHTTPError,
     RDFReplacementRequiredError,
     ResponseLost,
@@ -85,6 +87,85 @@ def test_write_http_failure_is_single_send(status: int) -> None:
     assert "items/1" in request.url
     assert json.loads(request.content) == {"o:is_public": False}
     assert error.value.status == status
+
+
+@pytest.mark.parametrize(
+    "response", [TransportResponse(204), TransportResponse(200, content=b"OK")]
+)
+def test_delete_accepts_success_without_parsing_a_record(response: TransportResponse) -> None:
+    requests: list[TransportRequest] = []
+
+    def transport(request: TransportRequest) -> TransportResponse:
+        requests.append(request)
+        return response
+
+    with OmekaClient(
+        "https://example.org/collection/api/",
+        key_identity="key-id",
+        key_credential="secret",
+        transport=transport,
+    ) as client:
+        assert client.delete("item_sets", 17) is None
+    (request,) = requests
+    url = urlsplit(request.url)
+    assert request.method == "DELETE" and request.content == b""
+    assert url.netloc == "example.org" and url.path == "/collection/api/item_sets/17"
+    assert parse_qs(url.query) == {"key_identity": ["key-id"], "key_credential": ["secret"]}
+
+
+@pytest.mark.parametrize("id", [0, -1, True, "17", 1.5, None])
+def test_delete_rejects_invalid_targets_before_sending(id: Any) -> None:
+    def transport(_: TransportRequest) -> TransportResponse:
+        pytest.fail("Invalid deletion sent a request.")
+
+    with OmekaClient("https://example.org", transport=transport) as client:
+        with pytest.raises(ConfigurationError, match="positive integer"):
+            client.delete("items", id)
+        with pytest.raises(ConfigurationError, match="resource name"):
+            client.delete("items/17", 17)
+
+
+@pytest.mark.parametrize(
+    ("result", "expected", "status"),
+    [
+        (TransportResponse(307, {"Location": "/api/items/2"}), OmekaHTTPError, 307),
+        (TransportResponse(403), OmekaHTTPError, 403),
+        (TransportResponse(404), OmekaHTTPError, 404),
+        (TransportResponse(500), OmekaHTTPError, 500),
+        (TransportResponse(503), OmekaHTTPError, 503),
+        (ConnectFailed, OmekaConnectionError, None),
+        (ResponseLost, WriteOutcomeUnknownError, None),
+    ],
+)
+def test_delete_failure_is_single_send(
+    result: TransportResponse | type[Exception], expected: type[OmekaError], status: int | None
+) -> None:
+    requests: list[TransportRequest] = []
+
+    def transport(request: TransportRequest) -> TransportResponse:
+        requests.append(request)
+        if isinstance(result, TransportResponse):
+            return result
+        raise result(request.url)
+
+    with (
+        OmekaClient(
+            "https://example.org",
+            key_identity="key-id",
+            key_credential="secret",
+            transport=transport,
+        ) as client,
+        pytest.raises(expected) as error,
+    ):
+        client.delete("items", 1)
+    (request,) = requests
+    assert request.method == "DELETE"
+    assert (error.value.operation, error.value.resource, error.value.status) == (
+        "DELETE",
+        "items",
+        status,
+    )
+    assert "secret" not in str(error.value)
 
 
 def test_multipart_files_and_payload(tmp_path: Path) -> None:

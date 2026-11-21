@@ -98,6 +98,11 @@ async def test_mcp_read_tools_and_template() -> None:
             await client.call_tool(
                 "omeka_create_record", {"resource": "items", "payload": {}, "confirm": True}
             )
+        with pytest.raises(ToolError):
+            await client.call_tool(
+                "omeka_delete_record", {"resource": "items", "record_id": 1, "confirm": True}
+            )
+        assert all(request.method == "GET" for request in fake.requests)
         with pytest.raises(ToolError) as error:
             await client.call_tool("omeka_get_record", {"resource": "items", "record_id": 99})
         assert "404" in str(error.value)
@@ -130,6 +135,7 @@ async def test_mcp_local_paths_and_confirmed_writes(tmp_path: Path) -> None:
             "omeka_download_file",
             "omeka_create_record",
             "omeka_patch_record",
+            "omeka_delete_record",
         }
         assert set(tools["omeka_capture_snapshot"].input_schema["required"]) == {
             "item_set_id",
@@ -220,6 +226,48 @@ async def test_mcp_local_paths_and_confirmed_writes(tmp_path: Path) -> None:
             )
 
 
+async def test_mcp_delete_requires_strict_confirmation() -> None:
+    fake = FakeOmeka({"items": [{"o:id": 1}, {"o:id": 2}]})
+    server = build_server(settings(mcp_allow_writes=True), transport=fake)
+    name = "omeka_delete_record"
+    target = {"resource": "items", "record_id": 1}
+    async with Client(server) as client:
+        tool = next(tool for tool in await client.list_tools() if tool.name == name)
+        assert set(tool.input_schema["required"]) == {"resource", "record_id"}
+        assert tool.input_schema["properties"]["confirm"]["default"] is False
+        assert tool.annotations.destructive_hint and not tool.annotations.read_only_hint
+
+        for args in (target, {**target, "confirm": False}):
+            preview = await client.call_tool(name, args)
+            assert preview.data == {
+                "sent": False,
+                "preview": {
+                    "method": "DELETE",
+                    "resource": "items",
+                    "id": 1,
+                    "installation_url": "https://example.org",
+                },
+            }
+        for overrides in (
+            {"confirm": "true"},
+            {"confirm": 1},
+            {"record_id": 0, "confirm": True},
+            {"record_id": True, "confirm": True},
+            {"resource": "items/1"},
+        ):
+            with pytest.raises(ToolError):
+                await client.call_tool(name, {**target, **overrides})
+        assert not fake.requests
+
+        confirmed = {**target, "confirm": True}
+        deleted = await client.call_tool(name, confirmed)
+        assert deleted.data == {"sent": True, "resource": "items", "id": 1}
+        assert fake.records["items"] == [{"o:id": 2}]
+        assert [request.method for request in fake.requests] == ["DELETE"]
+        with pytest.raises(ToolError, match="404"):
+            await client.call_tool(name, confirmed)
+
+
 async def test_mcp_file_uploads_use_workspace(tmp_path: Path) -> None:
     requests: list[TransportRequest] = []
     (tmp_path / "test.png").write_bytes(b"image-content")
@@ -299,20 +347,25 @@ def test_mcp_entry_points(
 
 
 async def test_visibility_cannot_override_write_gate() -> None:
-    server = build_server(settings(mcp_allow_writes=False))
+    fake = FakeOmeka({"items": [{"o:id": 1}]})
+    server = build_server(settings(mcp_allow_writes=False), transport=fake)
     server.enable(tags={"write"})
     async with Client(server) as client:
-        for name, extra in (("omeka_create_record", {}), ("omeka_patch_record", {"record_id": 1})):
+        for name, extra in (
+            ("omeka_create_record", {"payload": {}}),
+            ("omeka_patch_record", {"record_id": 1, "payload": {}}),
+            ("omeka_delete_record", {"record_id": 1}),
+        ):
             with pytest.raises(ToolError, match="write tools are disabled"):
                 await client.call_tool(
                     name,
                     {
                         "resource": "items",
-                        "payload": {},
                         "confirm": True,
                         **extra,
                     },
                 )
+    assert not fake.requests
 
 
 def test_mcp_path_resolution_errors_are_sanitized(
