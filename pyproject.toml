@@ -23,8 +23,8 @@ mcp = [
 ]
 
 [project.urls]
-Repository = "https://github.com/maehr/omeka-s-cli-mcp"
-Issues = "https://github.com/maehr/omeka-s-cli-mcp/issues"
+Repository = "https://github.com/maehr/omeka-s-client"
+Issues = "https://github.com/maehr/omeka-s-client/issues"
 
 [project.scripts]
 omeka-s = "omeka_s_client._entry_points:cli"

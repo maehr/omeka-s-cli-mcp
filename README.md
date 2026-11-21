@@ -1,4 +1,4 @@
-# Omeka S client
+# Omeka S Client
 
 Read and update Omeka S records with Python or the command line. Use the Model Context Protocol (MCP) server to connect an MCP client.
 
@@ -9,13 +9,13 @@ The package supports Python 3.11 and later. The integration tests cover Omeka S 
 Activate a Python virtual environment. Install the Python library.
 
 ```sh
-uv pip install git+https://github.com/maehr/omeka-s-cli-mcp
+uv pip install git+https://github.com/maehr/omeka-s-client
 ```
 
 To use the CLI and MCP server, install the optional dependencies.
 
 ```sh
-uv pip install 'omeka-s-client[cli,mcp] @ git+https://github.com/maehr/omeka-s-cli-mcp'
+uv pip install 'omeka-s-client[cli,mcp] @ git+https://github.com/maehr/omeka-s-client'
 ```
 
 Use `[cli]` for the command line alone. Use `[mcp]` for the MCP server and the command line.
