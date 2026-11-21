@@ -54,6 +54,8 @@ with OmekaClient(
 
 Pass `replace_rdf_values=True` when the payload contains RDF values or `clear_property_values`. The client sends each write once. Check the record before you repeat a write after an unknown outcome or a server error. [Security](security.md)
 
+Read `client.has_api_keys` to check whether the client has both keys. It reports configured keys. It does not prove that the server accepts them.
+
 ### Delete a record
 
 **Caution.** Verify the installation, resource, and ID before you call `delete`. Omeka S permanently deletes the record.

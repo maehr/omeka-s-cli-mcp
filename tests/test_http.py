@@ -94,6 +94,13 @@ def test_invalid_configuration(options: dict[str, Any]) -> None:
         OmekaClient("https://example.org", **options)
 
 
+def test_has_api_keys() -> None:
+    with OmekaClient("https://example.org") as client:
+        assert client.has_api_keys is False
+    with OmekaClient("https://example.org", key_identity="id", key_credential="secret") as client:
+        assert client.has_api_keys is True
+
+
 def test_request_headers_and_authentication() -> None:
     fake = FakeOmeka({"items": [{"o:id": 1}]})
 

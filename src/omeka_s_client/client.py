@@ -78,7 +78,24 @@ class OmekaClient:
             if key_identity is not None and key_credential is not None
             else []
         )
+        self._has_api_keys = bool(keys)
         self._http = HTTP(self.api_url, keys, timeout, transport, max_retries, sleep)
+
+    @property
+    def has_api_keys(self) -> bool:
+        """Report whether the client has both API keys.
+
+        This does not prove that the server accepts the keys.
+
+        >>> with OmekaClient("https://example.org") as client:
+        ...     client.has_api_keys
+        False
+        >>> keys = {"key_identity": "id", "key_credential": "secret"}
+        >>> with OmekaClient("https://example.org", **keys) as client:
+        ...     client.has_api_keys
+        True
+        """
+        return self._has_api_keys
 
     def close(self) -> None:
         """Close the underlying API and file clients.
