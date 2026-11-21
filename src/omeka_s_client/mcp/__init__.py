@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from pydantic_settings import SettingsError
 
 from .. import ConfigurationError, Transport
+from .._entry_points import require_tool_extra
 from .settings import McpSettings
 
 
@@ -22,6 +23,7 @@ def run_server(
     """Run a server on stdio or streamable HTTP."""
     if mode not in {"stdio", "http"}:
         raise ConfigurationError("Use stdio or http as the MCP transport.")
+    require_tool_extra("mcp")
     with settings.open_client(transport=transport):
         # Validate settings before the server opens its transport.
         pass

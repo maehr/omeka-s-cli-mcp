@@ -1,5 +1,7 @@
 # MCP server
 
+Install the `[mcp]` extra. [Installation](../README.md#install-the-prototype)
+
 Run `omeka-s-mcp` to start the server on standard input and output. `omeka-s mcp` starts the same server. Both commands read the `OMEKA_URL`, `OMEKA_KEY_IDENTITY`, `OMEKA_KEY_CREDENTIAL`, and `OMEKA_TIMEOUT` settings.
 
 ## Claude Code
@@ -8,7 +10,7 @@ Use the installation URL in your command. For a public installation, add this se
 
 ```sh
 claude mcp add --transport stdio omeka-s --env OMEKA_URL=https://example.org -- \
-  uvx --from git+https://github.com/maehr/omeka-s-cli-mcp omeka-s-mcp
+  uvx --from 'omeka-s-client[mcp] @ git+https://github.com/maehr/omeka-s-cli-mcp' omeka-s-mcp
 ```
 
 For authenticated access, configure both Omeka key variables in the client's environment settings. Use a private client configuration file for the credential.
@@ -22,7 +24,7 @@ Set each configuration variable in the `env` object. Claude Desktop starts the s
   "mcpServers": {
     "omeka-s": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/maehr/omeka-s-cli-mcp", "omeka-s-mcp"],
+      "args": ["--from", "omeka-s-client[mcp] @ git+https://github.com/maehr/omeka-s-cli-mcp", "omeka-s-mcp"],
       "env": {"OMEKA_URL": "https://example.org"}
     }
   }

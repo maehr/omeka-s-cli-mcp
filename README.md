@@ -6,13 +6,19 @@ The package supports Python 3.11 and later. The integration tests cover Omeka S 
 
 ## Install the prototype
 
-Activate a Python virtual environment. Install the package from GitHub.
+Activate a Python virtual environment. Install the Python library.
 
 ```sh
 uv pip install git+https://github.com/maehr/omeka-s-cli-mcp
 ```
 
-The package installs the `omeka_s_client` library, the `omeka-s` command, and the `omeka-s-mcp` server.
+To use the CLI and MCP server, install the optional dependencies.
+
+```sh
+uv pip install 'omeka-s-client[cli,mcp] @ git+https://github.com/maehr/omeka-s-cli-mcp'
+```
+
+Use `[cli]` for the command line alone. Use `[mcp]` for the MCP server and the command line.
 
 ## Read records
 

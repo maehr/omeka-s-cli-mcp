@@ -321,3 +321,13 @@ def test_private_client_refuses_direct_out_of_root_read() -> None:
         pytest.raises(UnsafeRedirectError),
     ):
         client._http.read(httpx2.URL("https://other.org/api/items"), "items", lambda *_: None)
+
+
+def test_strip_keys_preserves_non_utf8_query_names() -> None:
+    from unittest.mock import Mock
+
+    from omeka_s_client._urls import without_keys
+
+    url = Mock(spec=httpx2.URL, query=b"legacy-\xff=value&key_credential=old&keep=%2f")
+    assert without_keys(url) is url.copy_with.return_value
+    url.copy_with.assert_called_once_with(query=b"legacy-\xff=value&keep=%2f")

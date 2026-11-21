@@ -1,5 +1,7 @@
 # Command line
 
+Install the `[cli]` extra. [Installation](../README.md#install-the-prototype)
+
 Set `OMEKA_URL` to your Omeka S installation URL. For authenticated reads and writes, set `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL`. Set `OMEKA_TIMEOUT` to change the 30-second timeout.
 
 Use `--env-file PATH` to load a settings file. Put global options before the command. Use `--key-credential-file PATH` when the credential is in a separate file. Keep that file private.
