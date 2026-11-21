@@ -1,5 +1,4 @@
-"use strict";
-importScripts("https://cdn.jsdelivr.net/pyodide/v314.0.8/full/pyodide.js");
+import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v314.0.8/full/pyodide.mjs";
 
 const status = (text, ready = false) => postMessage({ type: "status", text, ready });
 

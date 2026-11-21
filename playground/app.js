@@ -1,6 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
-const worker = new Worker("worker.js");
+const worker = new Worker("worker.js", { type: "module" });
 let busy = false;
 
 const mode = () => document.querySelector('input[name="mode"]:checked').value;
