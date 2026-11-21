@@ -34,9 +34,13 @@ pytest --doctest-modules --cov --cov-fail-under=100
 
 ## 4. GitHub Workflow
 
-Topic branch and pull request, unless this file says `Git workflow: main`. No push access: `gh repo fork OWNER/REPO --clone`.
+Create a `work/<task>` branch from the upstream `main` branch. Push the branch. Open a pull request against upstream `main`.
 
-PR title: a Conventional Commit. One logical change per PR.
+If you lack push access, fork the repository first. Use the fork for the feature branch.
+
+Use a Conventional Commit title. Include one logical change in each pull request. Require an independent review and passing checks.
+
+After approval, squash merge with `--match-head-commit` set to the approved head commit. Use the commit that GitHub signs.
 
 ## 5. CI/CD Security
 
