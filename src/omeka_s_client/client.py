@@ -20,7 +20,7 @@ from typing import Any, Self
 import httpx2
 
 from . import _listing
-from ._http import HTTP, FilePart
+from ._http import HTTP, FilePart, _delay
 from ._urls import add_query, http_url, installation_url, query_pairs, validate_resource_name
 from .errors import (
     ConfigurationError,
@@ -44,6 +44,9 @@ class OmekaClient:
     >>> with OmekaClient("https://example.org/collection/api/", transport=FakeOmeka()) as client:
     ...     print(client.installation_url)
     https://example.org/collection
+
+    Set `cache_busting=True` to add a random query parameter and a `Pragma: no-cache`
+    header to each API GET request. File downloads and writes stay unchanged.
     """
 
     def __init__(
@@ -56,6 +59,7 @@ class OmekaClient:
         transport: Transport | None = None,
         max_retries: int = 3,
         sleep: Callable[[float], None] = time.sleep,
+        cache_busting: bool = False,
     ) -> None:
         self.installation_url = installation_url(base_url)
         self.api_url = self.installation_url + "/api/"
@@ -79,7 +83,7 @@ class OmekaClient:
             else []
         )
         self._has_api_keys = bool(keys)
-        self._http = HTTP(self.api_url, keys, timeout, transport, max_retries, sleep)
+        self._http = HTTP(self.api_url, keys, timeout, transport, max_retries, sleep, cache_busting)
 
     @property
     def has_api_keys(self) -> bool:
@@ -226,13 +230,15 @@ class OmekaClient:
         pairs = query_pairs(filters, verify=verify)
         if verify:
             pairs.extend([("sort_by", "id"), ("sort_order", order)])
-        for _ in range(3):
+        for attempt in range(3):
             try:
                 return self._collect(
                     resource, endpoint, pairs, per_page, verify, expected, max_records
                 )
             except _listing.VerificationFailure as error:
                 reason = str(error)
+                if attempt < 2:
+                    self._http._sleep(_delay(None, attempt + 1))
         raise IncompleteListingError(
             f"GET {resource} failed listing verification after three attempts. {reason}",
             operation="GET",
@@ -290,6 +296,8 @@ class OmekaClient:
                 )
             if verify:
                 _listing.verified_ids(page.records, ids, total)
+                if total is None and expected is not None and not ids <= expected:
+                    _listing.verify_end(ids, total, expected)
             records.extend(page.records)
             target = self._next_link(page, resource, pairs) if page.next_link is not None else None
             if target is not None and _listing.page_key(target) in visited:
@@ -300,9 +308,8 @@ class OmekaClient:
                 url = target
                 continue
             limit = total if verify else page.total
-            if limit is None and expected is not None:
-                limit = len(expected)
-            if limit is None or len(records) >= limit:
+            unbounded = verify and total is None and expected is not None
+            if not unbounded and (limit is None or len(records) >= limit):
                 break
             try:
                 next_page = int(page.url.params.get("page", "1")) + 1

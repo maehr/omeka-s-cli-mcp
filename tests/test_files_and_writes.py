@@ -338,6 +338,19 @@ def test_download_strips_keys_and_restarts_stream(tmp_path: Path) -> None:
         assert stat.S_IMODE(target.stat().st_mode) == 0o600
 
 
+def test_download_ignores_cache_busting(tmp_path: Path) -> None:
+    requests: list[TransportRequest] = []
+
+    def transport(request: TransportRequest) -> TransportResponse:
+        requests.append(request)
+        return TransportResponse(200, content=(b"abc",))
+
+    with OmekaClient("https://example.org", transport=transport, cache_busting=True) as client:
+        client.download("https://files.example.org/file", tmp_path / "image")
+    assert [r.url for r in requests] == ["https://files.example.org/file"]
+    assert "pragma" not in {k.lower() for k in requests[0].headers}
+
+
 @pytest.mark.parametrize(
     "reply",
     [

@@ -28,7 +28,11 @@ Records are JSON-LD dictionaries. The client preserves unknown keys and values. 
 | `list(resource, filters=..., verify=..., expected_ids=...)` | All matching records in page order |
 | `download(url, destination)` | Destination path, byte count, and SHA-256 digest |
 
-The client retries transient reads. A verified listing repeats the complete read after a consistency check fails. Catch `IncompleteListingError` if each verification attempt fails. Set `max_records` on `list` to reject a listing above a record limit.
+The client retries transient reads. A verified listing repeats the complete read after a consistency check fails. The client waits 2 s before the second attempt and 4 s before the third. Catch `IncompleteListingError` if each verification attempt fails. Set `max_records` on `list` to reject a listing above a record limit.
+
+## Bypass caches
+
+Set `cache_busting=True` when a proxy or cache returns stale lists. The client then adds a random `omeka_s_client_nonce` query parameter to each API GET request. It also sends `Pragma: no-cache`. The client never changes file downloads or writes. Do not use `omeka_s_client_nonce` as a filter name.
 
 ## Write records
 
