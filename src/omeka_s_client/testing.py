@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
+from email import policy
+from email.parser import BytesParser
 from threading import Lock
 from urllib.parse import parse_qs, urlencode, urlsplit
 
+from pydantic import TypeAdapter, ValidationError
+
 from .transport import TransportRequest, TransportResponse
 from .types import Record
+
+_PROPERTY_FIELD = re.compile(r"property\[([0-9]+)\]\[(property|type|text|joiner)\]")
+_RECORD = TypeAdapter(Record)
 
 
 class FakeOmeka:
@@ -48,10 +56,15 @@ class FakeOmeka:
         if resource == "api_resources" and request.method == "GET":
             return _response(200, [{"o:id": name} for name in sorted(self.records)])
         if request.method == "POST":
-            records = self.records.setdefault(resource, [])
-            payload = _json_payload(request)
+            content_type = request.headers.get("content-type", "")
+            payload = (
+                _multipart_payload(request.content, content_type)
+                if content_type.partition(";")[0].strip().lower() == "multipart/form-data"
+                else _json_payload(request)
+            )
             if payload is None:
                 return _response(400, {})
+            records = self.records.setdefault(resource, [])
             next_id = max((record["o:id"] for record in records), default=0) + 1
             created = {**payload, "o:id": next_id}
             records.append(created)
@@ -91,6 +104,16 @@ class FakeOmeka:
                 for record in records
                 if str(record.get("o:item", {}).get("o:id")) in query["item_id"]
             ]
+        property_groups = _exact_property_groups(query)
+        if property_groups:
+            records = [
+                record
+                for record in records
+                if any(
+                    all(_matches_property(record, term, text) for term, text in group)
+                    for group in property_groups
+                )
+            ]
         records = sorted(
             records, key=lambda record: record["o:id"], reverse=query.get("sort_order") == ["desc"]
         )
@@ -109,6 +132,56 @@ def _json_payload(request: TransportRequest) -> Record | None:
         if isinstance(value, dict):
             return value
     return None
+
+
+def _multipart_payload(content: bytes, content_type: str) -> Record | None:
+    header = f"Content-Type: {content_type}\r\n\r\n".encode()
+    message = BytesParser(policy=policy.default).parsebytes(header + content)
+    if message.defects:
+        return None
+    fields = [
+        part.get_payload(decode=True)
+        for part in message.iter_parts()
+        if part.get_content_disposition() == "form-data"
+        and part.get_param("name", header="content-disposition") == "data"
+        and part.get_filename() is None
+    ]
+    if len(fields) != 1 or not isinstance(fields[0], bytes):
+        return None
+    try:
+        return _RECORD.validate_json(fields[0])
+    except ValidationError:
+        return None
+
+
+def _exact_property_groups(query: dict[str, list[str]]) -> list[list[tuple[str, str]]]:
+    rows: dict[str, dict[str, str]] = {}
+    for key, values in query.items():
+        if match := _PROPERTY_FIELD.fullmatch(key):
+            index, field = match.groups()
+            rows.setdefault(index, {})[field] = values[-1]
+
+    # Each OR starts a new group so that AND binds more tightly.
+    groups: list[list[tuple[str, str]]] = []
+    for row in rows.values():
+        term = row.get("property", "")
+        if row.get("type") != "eq" or not term or term.isdecimal() or "text" not in row:
+            continue
+        if not groups or row.get("joiner") == "or":
+            groups.append([])
+        groups[-1].append((term, row["text"]))
+    return groups
+
+
+def _matches_property(record: Record, term: str, text: str) -> bool:
+    values = record.get(term)
+    return isinstance(values, list) and any(
+        isinstance(value, Mapping)
+        and (
+            value.get("@value") == text or (value.get("type") == "uri" and value.get("@id") == text)
+        )
+        for value in values
+    )
 
 
 def _response(

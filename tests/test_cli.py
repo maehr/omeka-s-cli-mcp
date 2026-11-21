@@ -71,7 +71,8 @@ def test_cli_settings_and_resource_commands(
 def test_cli_list_queries_verify_and_output(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    fake = FakeOmeka({"items": [{"o:id": 1}, {"o:id": 2}]})
+    items = [{"o:id": id, "dcterms:title": [{"@value": "a b"}]} for id in (1, 2)]
+    fake = FakeOmeka({"items": items})
     monkeypatch.setenv("OMEKA_URL", "https://example.org")
     app = build_app(transport=fake)
     expected = tmp_path / "expected.json"
@@ -101,10 +102,7 @@ def test_cli_list_queries_verify_and_output(
     result = runner.invoke(app, [*args, "--output", str(output)])
     assert result.exit_code == 0, result.output
     assert not result.stdout
-    assert [json.loads(line) for line in output.read_text().splitlines()] == [
-        {"o:id": 1},
-        {"o:id": 2},
-    ]
+    assert [json.loads(line) for line in output.read_text().splitlines()] == items
     query = parse_qs(urlsplit(fake.requests[0].url).query)
     assert query["tag"] == ["red", "blue"]
     assert query["property[0][text]"] == ["a b"]
