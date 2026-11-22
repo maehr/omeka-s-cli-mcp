@@ -1,6 +1,6 @@
 # Playground
 
-The playground runs the Python client in your browser. It uses Pyodide 314.0.8 in a web worker. Open it at <https://maehr.github.io/omeka-s-client/>.
+The playground runs the Python client in your browser. It uses Pyodide 314.0.8 in a web worker. Open it at <https://maehr.github.io/omeka-s-client/>. The playground is independent of the Omeka project.
 
 The playground shows the client calls for each action. It prints the Python snippet, the HTTP requests, and the JSON result.
 

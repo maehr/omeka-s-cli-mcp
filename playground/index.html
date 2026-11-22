@@ -9,13 +9,14 @@
 <body>
 <header>
   <h1>omeka-s-client playground</h1>
-  <p>Run the real <code>omeka_s_client</code> package in your browser with Pyodide.
+  <p>Run the real <code>omeka_s_client</code> package for the Omeka S REST API in your browser with Pyodide.
   Demo mode uses a seeded fake Omeka S installation. See the
   <a href="https://github.com/maehr/omeka-s-client">repository</a>.</p>
 </header>
 <main>
   <p id="status" role="status">Loading Pyodide...</p>
-  <form id="form">
+  <div class="layout">
+  <form id="form" class="card">
     <fieldset>
       <legend>Mode</legend>
       <label><input type="radio" name="mode" value="demo" checked> Demo</label>
@@ -61,22 +62,29 @@
     <button id="run" type="submit" disabled>Run</button>
     <button id="reset" type="button" disabled>Reset demo data</button>
   </form>
-  <section>
+  <div class="results">
+  <section class="card">
     <h2>Output</h2>
     <div id="error" hidden></div>
     <pre id="output"></pre>
   </section>
-  <section>
-    <h2>Python snippet <button id="copy" type="button">Copy</button></h2>
+  <section class="card">
+    <div class="head"><h2>Python snippet</h2><button id="copy" type="button">Copy</button></div>
     <pre id="snippet"></pre>
   </section>
-  <section>
+  <section class="card">
     <h2>Requests</h2>
     <ul id="requests"></ul>
     <h2>Warnings</h2>
     <ul id="warnings"></ul>
   </section>
+  </div>
+  </div>
 </main>
+<footer>
+  <p>omeka-s-client is an independent project. It is not affiliated with or endorsed by the Omeka project or Digital Scholar. Omeka is a trademark of its owners.
+  <a href="https://github.com/maehr/omeka-s-client">Repository</a> · Licence: <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a></p>
+</footer>
 <script src="app.js"></script>
 </body>
 </html>
