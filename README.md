@@ -46,6 +46,7 @@ The [Omeka McpServer module](https://github.com/omeka-s-modules/McpServer) runs 
 
 ## Documentation
 
+- [Playground](https://maehr.github.io/omeka-s-client/): run the client in your browser. [Playground guide](docs/playground.md)
 - [Python API](docs/usage.md)
 - [Command line](docs/cli.md)
 - [MCP tools](docs/mcp.md)

@@ -58,7 +58,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 python-version = "3.11"
 
 [tool.pytest.ini_options]
-testpaths = ["src", "tests"]
+testpaths = ["src", "tests", "playground"]
 addopts = "--doctest-modules --import-mode=importlib -m 'not integration'"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -81,6 +81,7 @@ source-include = [
   "SECURITY.md",
   "cliff.toml",
   "docs/**",
+  "playground/**",
   "prek.toml",
   "tests/**",
   "uv.lock",
