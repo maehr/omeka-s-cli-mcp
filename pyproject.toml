@@ -42,6 +42,9 @@ dev = [
   "commitizen==4.19.4",
   "git-cliff==2.14.2",
 ]
+docs = [
+  "pdoc==16.0.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.13,<0.14"]

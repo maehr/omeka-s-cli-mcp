@@ -1,12 +1,12 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
     "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
-    "python_full_version < '3.12' or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten')",
+    "(python_full_version < '3.14' and sys_platform != 'emscripten') or (python_full_version < '3.12' and sys_platform == 'emscripten')",
 ]
 
 [[package]]
@@ -966,6 +966,15 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown2"
+version = "2.5.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/ae/07d4a5fcaa5509221287d289323d75ac8eda5a5a4ac9de2accf7bbcc2b88/markdown2-2.5.5.tar.gz", hash = "sha256:001547e68f6e7fcf0f1cb83f7e82f48aa7d48b2c6a321f0cd20a853a8a2d1664", size = 157249, upload-time = "2026-03-02T20:46:53.411Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/af/4b3891eb0a49d6cfd5cbf3e9bf514c943afc2b0f13e2c57cc57cd88ecc21/markdown2-2.5.5-py3-none-any.whl", hash = "sha256:be798587e09d1f52d2e4d96a649c4b82a778c75f9929aad52a2c95747fa26941", size = 56250, upload-time = "2026-03-02T20:46:52.032Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1172,6 +1181,9 @@ dev = [
     { name = "ruff" },
     { name = "ty" },
 ]
+docs = [
+    { name = "pdoc" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1196,6 +1208,7 @@ dev = [
     { name = "ruff", specifier = "==0.17.6" },
     { name = "ty", specifier = "==0.0.107" },
 ]
+docs = [{ name = "pdoc", specifier = "==16.0.0" }]
 
 [[package]]
 name = "openapi-pydantic"
@@ -1237,6 +1250,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/66/f3/5a20387de9bcd0607871bfc2198ee0e15836da7baa4592ccd7f24c27c986/pathable-0.6.0.tar.gz", hash = "sha256:6404b8b82aef5ff0fd478934137128b99b12212ba35afdde5525ca4f8388ea58", size = 18970, upload-time = "2026-05-19T18:15:11.911Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/e8/6d75ffd9784bce2e93d1ae4415649427e39a53bb172d4672b2b59c6f0a7b/pathable-0.6.0-py3-none-any.whl", hash = "sha256:82c4ca6c98c502ad12e0d4e9779b6210afee93c38990988c8c5d1b49bdcdf566", size = 18983, upload-time = "2026-05-19T18:15:10.728Z" },
+]
+
+[[package]]
+name = "pdoc"
+version = "16.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "markdown2" },
+    { name = "markupsafe" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/fe/ab3f34a5fb08c6b698439a2c2643caf8fef0d61a86dd3fdcd5501c670ab8/pdoc-16.0.0.tar.gz", hash = "sha256:fdadc40cc717ec53919e3cd720390d4e3bcd40405cb51c4918c119447f913514", size = 111890, upload-time = "2025-10-27T16:02:16.345Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/a1/56a17b7f9e18c2bb8df73f3833345d97083b344708b97bab148fdd7e0b82/pdoc-16.0.0-py3-none-any.whl", hash = "sha256:070b51de2743b9b1a4e0ab193a06c9e6c12cf4151cf9137656eebb16e8556628", size = 100014, upload-time = "2025-10-27T16:02:15.007Z" },
 ]
 
 [[package]]
