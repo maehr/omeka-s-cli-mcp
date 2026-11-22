@@ -1,6 +1,6 @@
 # Command line
 
-Install the `[cli]` extra. [Installation](../README.md#install-the-prototype)
+Install the `[cli]` extra. [Installation](../README.md#install)
 
 Set `OMEKA_URL` to your Omeka S installation URL. For authenticated reads and writes, set `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL`. Set `OMEKA_TIMEOUT` to change the 30-second timeout.
 
