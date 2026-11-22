@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -35,9 +36,20 @@ class TransportResponse:
 
 
 class Transport(Protocol):
-    """Process one request and return a response."""
+    """Process one request and return a response.
 
-    def __call__(self, request: TransportRequest, /) -> TransportResponse: ...
+    A transport is any callable with the signature of `__call__`.
+    """
+
+    @abstractmethod
+    def __call__(self, request: TransportRequest, /) -> TransportResponse:
+        """Process one request and return a response. @public
+
+        >>> def transport(request: TransportRequest, /) -> TransportResponse:
+        ...     return TransportResponse(204)
+        >>> transport(TransportRequest("GET", "https://example.org/api/items")).status
+        204
+        """
 
 
 class ConnectFailed(Exception):

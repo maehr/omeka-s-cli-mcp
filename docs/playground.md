@@ -39,10 +39,10 @@ A list action fails if the browser hides the total header.
 Build the package and the site. Then serve the site.
 
 ```bash
-uv build && sh playground/build.sh && python3 -m http.server -d _site
+uv build && sh playground/build.sh && uv run --group docs pdoc -o _site/api omeka_s_client && python3 -m http.server -d _site
 ```
 
-Open <http://localhost:8000/>.
+Open <http://localhost:8000/>. The generated Python API reference is at <http://localhost:8000/api/>.
 
 Run the smoke test after you build.
 
