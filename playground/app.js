@@ -9,8 +9,15 @@ const LIVE_OPS = ["get", "page", "list"];
 function refresh() {
   const live = mode() === "live";
   $("live-box").hidden = !live;
-  for (const o of $("op").options) o.disabled = live && !LIVE_OPS.includes(o.value);
-  if ($("op").selectedOptions[0].disabled) $("op").value = "get";
+  $("examples-box").hidden = live;
+  for (const o of $("op").options) {
+    o.disabled = live && !LIVE_OPS.includes(o.value);
+    o.textContent = o.disabled ? o.value + " (demo only)" : o.value;
+  }
+  if ($("op").selectedOptions[0].disabled) {
+    $("status").textContent = $("op").value + " runs only in demo mode. Switched to get.";
+    $("op").value = "get";
+  }
   const op = $("op").value;
   for (const el of document.querySelectorAll("[data-ops]")) {
     el.hidden = !el.dataset.ops.split(" ").includes(op);
@@ -86,7 +93,16 @@ worker.onmessage = ({ data }) => {
     setBusy(false);
   }
 };
-worker.onerror = (e) => { $("status").textContent = "Worker error: " + e.message; };
+worker.onerror = (e) => {
+  // A failed worker cannot run later messages. Keep Run and Reset off and offer a reload.
+  busy = true;
+  $("run").disabled = true;
+  $("reset").disabled = true;
+  const reload = Object.assign(document.createElement("button"), { type: "button", textContent: "Reload page" });
+  reload.addEventListener("click", () => location.reload());
+  $("status").replaceChildren("Worker error: " + (e.message || "the worker stopped") + ". ", reload);
+  render({ ok: false, error: "WorkerError", message: (e.message || "The worker stopped.") + " Reload the page to try again.", status: null });
+};
 
 $("form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -111,7 +127,39 @@ $("form").addEventListener("submit", (e) => {
 });
 
 $("reset").addEventListener("click", () => { setBusy(true); worker.postMessage({ type: "reset" }); });
-$("copy").addEventListener("click", () => navigator.clipboard.writeText($("snippet").textContent));
+$("copy").addEventListener("click", () => {
+  const set = (t) => { $("copy").textContent = t; setTimeout(() => { $("copy").textContent = "Copy"; }, 2000); };
+  navigator.clipboard.writeText($("snippet").textContent).then(() => set("Copied"), () => set("Copy failed"));
+});
+const EXAMPLES = JSON.parse($("examples").textContent);
+const DEFAULTS = {};
+for (const el of document.querySelectorAll(".inputs input, .inputs textarea")) {
+  DEFAULTS[el.id] = el.type === "checkbox" ? el.defaultChecked : el.defaultValue;
+}
+
+function prefill(example) {
+  document.querySelector('input[name="mode"][value="demo"]').checked = true;
+  for (const [id, value] of Object.entries(DEFAULTS)) {
+    $(id)[typeof value === "boolean" ? "checked" : "value"] = value;
+  }
+  const a = example.args;
+  for (const k of ["resource", "id", "page", "per_page", "payload"]) {
+    if (k in a) $(k).value = k === "payload" ? JSON.stringify(a[k]) : a[k];
+  }
+  const c = (a.conditions || [])[0];
+  if (c) {
+    $("cond-property").value = c.property;
+    $("cond-type").value = c.type;
+    $("cond-value").value = c.value;
+  }
+  $("op").value = example.op;
+  $("example-blurb").textContent = example.blurb;
+  refresh();
+}
+
+for (const b of document.querySelectorAll("[data-example]")) {
+  b.addEventListener("click", () => prefill(EXAMPLES[Number(b.dataset.example)]));
+}
 $("op").addEventListener("change", refresh);
 for (const r of document.querySelectorAll('input[name="mode"]')) r.addEventListener("change", refresh);
 refresh();

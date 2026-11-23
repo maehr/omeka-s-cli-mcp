@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -74,6 +75,8 @@ def test_get_page_list() -> None:
     assert out["result"]["o:id"] == 3
     assert out["requests"] == ["GET https://demo.example.org/api/items/3"]
     assert "FakeOmeka(" in out["snippet"] and "client.get('items', 3)" in out["snippet"]
+    assert "records = {" in out["snippet"] and "# Template: use your own records." in out["snippet"]
+    assert "your own test data" not in out["snippet"]
     out = run("page", {"per_page": 5, "filters": [["item_set_id", "2"]]})
     assert out["result"]["total"] == 6 and out["result"]["has_next"]
     out = run(
@@ -212,3 +215,50 @@ def test_live_transport_refuses_writes() -> None:
     transport = pg.live_transport(Sender())
     with pytest.raises(ConnectFailed, match="only GET"):
         transport(TransportRequest("POST", "https://x.example/api/items"))
+
+
+_html = (Path(__file__).parent.parent / "playground" / "index.html").read_text()
+
+
+def _examples() -> list[dict[str, Any]]:
+    match = re.search(r'<script type="application/json" id="examples">(.*?)</script>', _html, re.S)
+    assert match is not None
+    return json.loads(match.group(1))
+
+
+def test_examples_run_in_demo_mode() -> None:
+    examples = _examples()
+    assert len(examples) == 3
+    assert all("mode" not in e["args"] and e["blurb"] for e in examples)
+    demo = pg.Demo()
+    results = [run(e["op"], e["args"], demo) for e in examples]
+    assert all(r["ok"] for r in results)
+    assert results[0]["result"]["o:id"] == 1
+    assert [r["o:id"] for r in results[1]["result"]] == [1]
+
+
+def test_every_operation_has_help() -> None:
+    select = re.search(r'<select id="op">(.*?)</select>', _html, re.S)
+    assert select is not None
+    ops = re.findall(r'<option value="(\w+)"', select.group(1))
+    assert len(ops) == 7
+    for op in ops:
+        assert re.search(rf'<p class="note" data-ops="{op}">', _html), op
+
+
+def test_page_intro_and_order() -> None:
+    assert re.search(r"<h1>Omeka S Client</h1>", _html)
+    for link in (
+        "README.md#install",
+        'href="api/"',
+        "docs/usage.md",
+        "docs/cli.md",
+        "docs/mcp.md",
+        "docs/api-coverage.md",
+        "docs/playground.md",
+    ):
+        assert link in _html, link
+    mode = _html.index("<legend>Mode</legend>")
+    assert mode < _html.index('id="examples-box"') < _html.index('id="op"')
+    assert _html.index('id="live-box"') < _html.index('id="examples-box"')
+    assert "Reference:" not in _html and 'role="alert"' in _html

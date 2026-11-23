@@ -19,13 +19,20 @@ const ready = (async () => {
   pyodide.runPython("import sys; sys.path.insert(0, '/home/pyodide')");
   const mod = pyodide.pyimport("playground");
   const send = pyodide.pyimport("pyodide.http").pyxhr.get;
-  status("Ready.", true);
+  status("Ready. omeka-s-client " + wheel.split("-")[1] + ".", true);
   return { mod, demo: mod.Demo(), send };
 })();
 ready.catch((e) => status("Failed to start: " + e));
 
 onmessage = async ({ data }) => {
-  const { mod, demo, send } = await ready;
+  let ctx;
+  try {
+    ctx = await ready;
+  } catch (e) {
+    postMessage({ type: "result", data: { ok: false, error: "WorkerError", message: String(e), status: null, snippet: "", requests: [], warnings: [] } });
+    return;
+  }
+  const { mod, demo, send } = ctx;
   if (data.type === "reset") {
     demo.reset();
     status("Demo data reset.", true);
