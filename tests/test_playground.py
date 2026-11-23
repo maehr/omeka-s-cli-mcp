@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -212,3 +213,32 @@ def test_live_transport_refuses_writes() -> None:
     transport = pg.live_transport(Sender())
     with pytest.raises(ConnectFailed, match="only GET"):
         transport(TransportRequest("POST", "https://x.example/api/items"))
+
+
+_html = (Path(__file__).parent.parent / "playground" / "index.html").read_text()
+
+
+def _examples() -> list[dict[str, Any]]:
+    match = re.search(r'<script type="application/json" id="examples">(.*?)</script>', _html, re.S)
+    assert match is not None
+    return json.loads(match.group(1))
+
+
+def test_examples_run_in_demo_mode() -> None:
+    examples = _examples()
+    assert len(examples) == 3
+    assert all("mode" not in e["args"] and e["blurb"] for e in examples)
+    demo = pg.Demo()
+    results = [run(e["op"], e["args"], demo) for e in examples]
+    assert all(r["ok"] for r in results)
+    assert results[0]["result"]["o:id"] == 1
+    assert [r["o:id"] for r in results[1]["result"]] == [1]
+
+
+def test_every_operation_has_help() -> None:
+    select = re.search(r'<select id="op">(.*?)</select>', _html, re.S)
+    assert select is not None
+    ops = re.findall(r'<option value="(\w+)"', select.group(1))
+    assert len(ops) == 7
+    for op in ops:
+        assert re.search(rf'<p class="note" data-ops="{op}">', _html), op

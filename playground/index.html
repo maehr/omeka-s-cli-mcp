@@ -16,6 +16,58 @@
 <main>
   <p id="status" role="status">Loading Pyodide...</p>
   <div class="layout">
+  <div class="left">
+  <section class="card" id="examples-box">
+    <h2>Examples</h2>
+    <p class="note">Each button fills the form in demo mode. Then press Run.</p>
+    <div id="example-buttons"><button type="button" class="example" data-example="0">Read an item</button><button type="button" class="example" data-example="1">Search by identifier</button><button type="button" class="example" data-example="2">Create an item</button></div>
+    <p class="note" id="example-blurb" role="status"></p>
+  </section>
+  <script type="application/json" id="examples">
+[
+  {
+    "label": "Read an item",
+    "blurb": "Reads item 1. Look at Output for the record and at Requests for the HTTP call.",
+    "op": "get",
+    "args": {
+      "resource": "items",
+      "id": 1
+    }
+  },
+  {
+    "label": "Search by identifier",
+    "blurb": "Lists items where dcterms:identifier equals letter-001. Look at Requests for the filter in the URL.",
+    "op": "list",
+    "args": {
+      "resource": "items",
+      "conditions": [
+        {
+          "property": "dcterms:identifier",
+          "type": "eq",
+          "value": "letter-001"
+        }
+      ]
+    }
+  },
+  {
+    "label": "Create an item",
+    "blurb": "Creates an item from the default payload. Look at Output for the new record. The write changes only the demo data in your browser. Reset demo data restores it.",
+    "op": "create",
+    "args": {
+      "resource": "items",
+      "payload": {
+        "dcterms:title": [
+          {
+            "type": "literal",
+            "property_id": 1,
+            "@value": "New item"
+          }
+        ]
+      }
+    }
+  }
+]
+  </script>
   <form id="form" class="card">
     <fieldset>
       <legend>Mode</legend>
@@ -23,7 +75,7 @@
       <label><input type="radio" name="mode" value="live"> Live</label>
       <div id="live-box" hidden>
         <label>Omeka S URL <input id="url" type="url" placeholder="https://omeka.example.org"></label>
-        <p class="note">Public reads only. The server must allow CORS.</p>
+        <p class="note">Public GET requests only. The client sends no API keys. The server must allow CORS and must let you read the records.</p>
       </div>
     </fieldset>
     <label>Operation
@@ -37,24 +89,38 @@
         <option value="upload">upload</option>
       </select>
     </label>
+    <p class="note" data-ops="get">Read one record by its ID. Look at Output for the record.</p>
+    <p class="note" data-ops="page">Read one page of a collection. Output shows the records and <code>has_next</code>. Use Page and Per page to move.</p>
+    <p class="note" data-ops="list">Read all pages of a collection into one list. Add filters to read fewer records. Verify checks the reads (see below).</p>
+    <p class="note" data-ops="create">Create a record from a JSON payload. Demo mode only. The new record exists only in this browser.</p>
+    <p class="note" data-ops="patch">Change part of a record with a JSON payload. Demo mode only.</p>
+    <p class="note" data-ops="delete">Delete a record by its ID. Demo mode only. You must confirm.</p>
+    <p class="note" data-ops="upload">Create an item with one attached text file as media. Demo mode only.</p>
     <div class="inputs">
-      <label data-ops="get page list create patch delete">Resource <input id="resource" value="items"></label>
-      <label data-ops="get patch delete">ID <input id="id" type="number" min="1" value="1"></label>
-      <label data-ops="page">Page <input id="page" type="number" min="1" value="1"></label>
-      <label data-ops="page list">Per page <input id="per_page" type="number" min="1" value="10"></label>
+      <label data-ops="get page list create patch delete">Resource <input id="resource" value="items"><small class="note">An API path, such as <code>items</code>, <code>item_sets</code>, or <code>media</code>.</small></label>
+      <label data-ops="get patch delete">ID <input id="id" type="number" min="1" value="1"><small class="note">A positive whole number: the <code>o:id</code> of the record.</small></label>
+      <label data-ops="page">Page <input id="page" type="number" min="1" value="1"><small class="note"><code>has_next</code> in Output tells you if another page exists.</small></label>
+      <label data-ops="page list">Per page <input id="per_page" type="number" min="1" value="10"><small class="note">The number of records in each request.</small></label>
       <label data-ops="page list">Filters (key=value per line)
         <textarea id="filters" rows="2" placeholder="item_set_id=1"></textarea></label>
       <fieldset data-ops="page list">
         <legend>Property condition (optional)</legend>
+        <small class="note">Example: <code>dcterms:identifier</code>, <code>eq</code>, <code>letter-001</code>. Your Omeka S installation decides which types work. Demo mode supports only <code>eq</code>.</small>
         <label>Property <input id="cond-property" placeholder="dcterms:title"></label>
         <label>Type <input id="cond-type" value="eq"></label>
         <label>Value <input id="cond-value"></label>
       </fieldset>
       <label data-ops="list"><input id="verify" type="checkbox"> Verify</label>
+      <details data-ops="list" class="note">
+        <summary>About Verify and Expected IDs</summary>
+        <p>Verify reads the pages in ID order. It checks that the total count and the IDs stay consistent across pages. It tries up to three times. A verified list fails if the count changes during the read, an ID repeats, or a page link is wrong. A verified list also fails if an expected ID is missing.</p>
+        <p>Verify does not prove that you see every record, because permissions can hide records. It is not a point-in-time snapshot.</p>
+        <p>Expected IDs: if you fill this field, Verify turns on. The read fails if an expected ID is missing.</p>
+      </details>
       <label data-ops="list">Expected IDs (comma list) <input id="expected_ids" placeholder="1,2,3"></label>
       <label data-ops="create patch upload">Payload (JSON)
         <textarea id="payload" rows="6">{"dcterms:title": [{"type": "literal", "property_id": 1, "@value": "New item"}]}</textarea></label>
-      <label data-ops="patch"><input id="replace_rdf_values" type="checkbox"> Replace RDF values</label>
+      <label data-ops="patch"><input id="replace_rdf_values" type="checkbox"> Replace RDF values<small class="note">Tick this to send RDF values such as <code>dcterms:title</code>. Warning: Omeka S replaces all RDF values of the record. Values that your payload omits can be removed.</small></label>
       <label data-ops="upload">Filename <input id="filename" value="note.txt"></label>
       <label data-ops="upload">Text <textarea id="text" rows="2">Hello from the playground.</textarea></label>
       <label data-ops="delete"><input id="confirm" type="checkbox"> Confirm delete</label>
@@ -62,20 +128,26 @@
     <button id="run" type="submit" disabled>Run</button>
     <button id="reset" type="button" disabled>Reset demo data</button>
   </form>
+  <p class="note">Reference: <a href="api/">Python API</a>, <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/api-coverage.md">API coverage</a>, <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/playground.md">Playground guide</a>.</p>
+  </div>
   <div class="results">
   <section class="card">
     <h2>Output</h2>
+    <p class="note">The parsed JSON result.</p>
     <div id="error" hidden></div>
     <pre id="output"></pre>
   </section>
   <section class="card">
     <div class="head"><h2>Python snippet</h2><button id="copy" type="button">Copy</button></div>
+    <p class="note">The equivalent client call.</p>
     <pre id="snippet"></pre>
   </section>
   <section class="card">
     <h2>Requests</h2>
+    <p class="note">The HTTP activity.</p>
     <ul id="requests"></ul>
     <h2>Warnings</h2>
+    <p class="note">Limits or incomplete reads.</p>
     <ul id="warnings"></ul>
   </section>
   </div>

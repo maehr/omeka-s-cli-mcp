@@ -112,6 +112,35 @@ $("form").addEventListener("submit", (e) => {
 
 $("reset").addEventListener("click", () => { setBusy(true); worker.postMessage({ type: "reset" }); });
 $("copy").addEventListener("click", () => navigator.clipboard.writeText($("snippet").textContent));
+const EXAMPLES = JSON.parse($("examples").textContent);
+const DEFAULTS = {};
+for (const el of document.querySelectorAll(".inputs input, .inputs textarea")) {
+  DEFAULTS[el.id] = el.type === "checkbox" ? el.checked : el.value;
+}
+
+function prefill(example) {
+  document.querySelector('input[name="mode"][value="demo"]').checked = true;
+  for (const [id, value] of Object.entries(DEFAULTS)) {
+    $(id)[typeof value === "boolean" ? "checked" : "value"] = value;
+  }
+  const a = example.args;
+  for (const k of ["resource", "id", "page", "per_page", "payload"]) {
+    if (k in a) $(k).value = k === "payload" ? JSON.stringify(a[k]) : a[k];
+  }
+  const c = (a.conditions || [])[0];
+  if (c) {
+    $("cond-property").value = c.property;
+    $("cond-type").value = c.type;
+    $("cond-value").value = c.value;
+  }
+  $("op").value = example.op;
+  $("example-blurb").textContent = example.blurb;
+  refresh();
+}
+
+for (const b of document.querySelectorAll("[data-example]")) {
+  b.addEventListener("click", () => prefill(EXAMPLES[Number(b.dataset.example)]));
+}
 $("op").addEventListener("change", refresh);
 for (const r of document.querySelectorAll('input[name="mode"]')) r.addEventListener("change", refresh);
 refresh();

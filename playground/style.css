@@ -35,6 +35,12 @@ legend{padding:0 .3rem;font-weight:600}
 label:has(input[type=radio]){display:inline-block;margin-right:1rem}
 .inputs{display:grid;gap:0 1rem}
 .note{margin:.4rem 0;font-size:.9rem;color:var(--muted)}
+small.note{display:block}
+details.note{margin:.6rem 0}
+details.note summary{cursor:pointer;font-weight:600}
+.left{display:grid;gap:1rem;align-content:start;min-width:0}
+#example-buttons{display:grid;gap:.4rem}
+#example-buttons button{margin-top:0}
 button{
   min-height:44px;
   width:100%;
@@ -84,8 +90,9 @@ footer{font-size:.875rem;color:var(--muted)}
   header{padding:1.5rem 2rem}
   .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
   .inputs{grid-template-columns:1fr 1fr}
-  .inputs>[data-ops*=payload],.inputs>fieldset,.inputs>label:has(textarea){grid-column:1/-1}
+  .inputs>details,.inputs>[data-ops*=payload],.inputs>fieldset,.inputs>label:has(textarea){grid-column:1/-1}
   button{width:auto}
+  #example-buttons{display:flex;flex-wrap:wrap}
 }
 @media (prefers-color-scheme:dark){
   :root{

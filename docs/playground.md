@@ -12,6 +12,16 @@ Use demo mode to try reads, writes, and uploads. No data leaves your browser.
 
 Use the reset button to restore the sample data. Reloading the page also restores it.
 
+## Help and examples
+
+The page explains each operation under the Operation menu. Each input has a short note. The Verify note explains what a verified list checks and what it does not check.
+
+Three example buttons fill the form in demo mode. They read an item, search by identifier, and create an item. A button does not run the action. Press Run to run it.
+
+The create example changes only the demo data. Use Reset demo data to restore it.
+
+Each result card has a note. Output is the parsed JSON. Python snippet is the equivalent client call. Requests is the HTTP activity. Warnings shows limits or incomplete reads.
+
 ## Live mode
 
 Live mode reads from a public Omeka S installation. It sends only GET requests. It sends no API keys. It reads only public records.

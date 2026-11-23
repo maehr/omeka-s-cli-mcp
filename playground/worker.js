@@ -19,7 +19,7 @@ const ready = (async () => {
   pyodide.runPython("import sys; sys.path.insert(0, '/home/pyodide')");
   const mod = pyodide.pyimport("playground");
   const send = pyodide.pyimport("pyodide.http").pyxhr.get;
-  status("Ready.", true);
+  status("Ready. omeka-s-client " + wheel.split("-")[1] + ".", true);
   return { mod, demo: mod.Demo(), send };
 })();
 ready.catch((e) => status("Failed to start: " + e));
