@@ -16,6 +16,7 @@
 - Document the community contribution workflow ([#31](https://github.com/maehr/omeka-s-client/pull/31)).
 - Specify the MCP install extra ([#35](https://github.com/maehr/omeka-s-client/pull/35)).
 - Publish a pdoc API reference next to the playground ([#54](https://github.com/maehr/omeka-s-client/pull/54)).
+- Clarify API coverage, verified reads, and snapshot completeness ([#60](https://github.com/maehr/omeka-s-client/pull/60)).
 
 ### Features
 
