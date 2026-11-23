@@ -20,6 +20,9 @@ trim = true
 conventional_commits = true
 filter_unconventional = true
 filter_commits = true
+commit_preprocessors = [
+  { pattern = '\(#(\d+)\)', replace = "([#${1}](https://github.com/maehr/omeka-s-client/pull/${1}))" },
+]
 commit_parsers = [
   { message = "^refactor!", group = "Breaking changes" },
   { message = "^feat", group = "Features" },

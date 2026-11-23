@@ -1,6 +1,6 @@
 # Command line
 
-Install the `[cli]` extra. [Installation](../README.md#install-the-prototype)
+Install the `[cli]` extra. [Installation](../README.md#install)
 
 The CLI uses the Python client. The same API limits apply: one-segment resource names, positive integer IDs, and no `PUT`. [API coverage](api-coverage.md)
 

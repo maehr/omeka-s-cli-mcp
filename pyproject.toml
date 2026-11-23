@@ -1,6 +1,6 @@
 [project]
 name = "omeka-s-client"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Python client, CLI, and MCP server for the Omeka S REST API"
 readme = "README.md"
 requires-python = ">=3.11"
