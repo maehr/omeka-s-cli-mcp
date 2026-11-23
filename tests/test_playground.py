@@ -38,10 +38,12 @@ class Sender:
         error: Exception | None = None,
     ) -> None:
         self.seen: list[dict[str, str]] = []
+        self.urls: list[str] = []
         self.total, self.status, self.body, self.error = total, status, body, error
 
     def __call__(self, url: str, headers: dict[str, str]) -> Any:
         self.seen.append(headers)
+        self.urls.append(url)
         if self.error:
             raise self.error
         headers_out = {"Omeka-S-Total-Results": "2"} if self.total else {}
@@ -209,6 +211,57 @@ def test_live_errors() -> None:
         assert out["error"] == "ValidationError"
     payload = {"mode": "live", "url": "https://x.example", "op": "get", "args": {"id": 1}}
     assert "sender" in json.loads(pg.run_json(json.dumps(payload), pg.Demo()))["message"]
+
+
+def _keyed(op: str, send: Any, args: dict[str, Any] | None = None, **extra: Any) -> str:
+    payload = {
+        "mode": "live",
+        "url": "https://live.example.org",
+        "op": op,
+        "args": args or {"id": 1},
+        "key_identity": "key-id",
+        "key_credential": "s3cret-cred",
+        **extra,
+    }
+    return pg.run_json(json.dumps(payload), pg.Demo(), send)
+
+
+def test_live_keys_reach_sender_but_not_output() -> None:
+    cases = [
+        ("get", Sender(body={"o:id": 1}), {"id": 1}),
+        ("list", Sender(), {"per_page": 2}),
+        ("get", Sender(status=403, body={"o:message": "no"}), {"id": 1}),
+        ("get", Sender(error=OSError()), {"id": 1}),
+        ("get", Sender(error=OSError("blocked")), {"id": 1}),
+    ]
+    for op, send, args in cases:
+        raw = _keyed(op, send, args)
+        assert "s3cret-cred" not in raw
+        assert "key-id" not in json.dumps(json.loads(raw)["requests"])
+        assert "key_identity=key-id" in send.urls[0]
+        assert "key_credential=s3cret-cred" in send.urls[0]
+    assert json.loads(_keyed("get", Sender(body={}), {"id": 1}))["requests"] == [
+        "GET https://live.example.org/api/items/1"
+    ]
+    assert json.loads(_keyed("get", Sender(status=403, body={}), {"id": 1}))["status"] == 403
+
+
+def test_live_key_snippet() -> None:
+    snippet = json.loads(_keyed("get", Sender(body={})))["snippet"]
+    assert snippet.startswith("import os\n")
+    assert 'key_identity=os.environ["OMEKA_KEY_IDENTITY"]' in snippet
+    assert 'key_credential=os.environ["OMEKA_KEY_CREDENTIAL"]' in snippet
+    assert "s3cret-cred" not in snippet and "key-id" not in snippet
+    compile(snippet, "snippet", "exec")
+
+
+def test_key_validation() -> None:
+    out = json.loads(_keyed("get", None, mode="demo", url=""))
+    assert out["error"] == "ValidationError" and "Live mode" in out["message"]
+    assert "s3cret-cred" not in json.dumps(out)
+    payload = {"mode": "live", "url": "https://x.example", "op": "get", "args": {"id": 1}}
+    out = json.loads(pg.run_json(json.dumps({**payload, "key_identity": "a"}), pg.Demo(), Sender()))
+    assert not out["ok"] and out["error"] == "ConfigurationError"
 
 
 def test_live_transport_refuses_writes() -> None:
