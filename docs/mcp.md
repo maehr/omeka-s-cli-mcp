@@ -47,6 +47,12 @@ The server uses standard input and output by default. The `omeka-s mcp` command 
 | `omeka_patch_record` | Preview or update an Omeka record |
 | `omeka_delete_record` | Preview or permanently delete an Omeka record |
 
+`omeka_list_api_resources` reads only the first page of `api_resources`, with up to 50 resources. The list can be incomplete on an installation with many modules.
+
+The tools use the Python client. The same API limits apply: one-segment resource names, positive integer IDs, and no `PUT`. [API coverage](api-coverage.md)
+
+`omeka_capture_snapshot` saves only the records that the configured keys can read. Without keys, it saves only public records. It does not save the original files. [Snapshot format](snapshot-format.md)
+
 Use the resource template `omeka://{resource}/{id}` to read a record as an MCP resource.
 
 Set `OMEKA_MCP_ALLOW_WRITES=true` to enable the Omeka write tools. Review the preview. Set `confirm=true` to send the write request. To replace RDF values, also set `replace_rdf_values=true`.
