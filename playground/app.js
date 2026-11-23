@@ -115,7 +115,7 @@ $("copy").addEventListener("click", () => navigator.clipboard.writeText($("snipp
 const EXAMPLES = JSON.parse($("examples").textContent);
 const DEFAULTS = {};
 for (const el of document.querySelectorAll(".inputs input, .inputs textarea")) {
-  DEFAULTS[el.id] = el.type === "checkbox" ? el.checked : el.value;
+  DEFAULTS[el.id] = el.type === "checkbox" ? el.defaultChecked : el.defaultValue;
 }
 
 function prefill(example) {

@@ -113,9 +113,9 @@
       <label data-ops="list"><input id="verify" type="checkbox"> Verify</label>
       <details data-ops="list" class="note">
         <summary>About Verify and Expected IDs</summary>
-        <p>Verify reads the pages in ID order. It checks that the total count and the IDs stay consistent across pages. It tries up to three times. A verified list fails if the count changes during the read, an ID repeats, or a page link is wrong. A verified list also fails if an expected ID is missing.</p>
+        <p>Verify reads the pages in ID order. It checks that the total count stays the same and that no ID repeats. At the end, the number of unique IDs must match the count. It tries up to three times.</p>
         <p>Verify does not prove that you see every record, because permissions can hide records. It is not a point-in-time snapshot.</p>
-        <p>Expected IDs: if you fill this field, Verify turns on. The read fails if an expected ID is missing.</p>
+        <p>Expected IDs: if you fill this field, Verify turns on. The IDs that you get must equal this list. A missing ID or an extra ID makes the read fail.</p>
       </details>
       <label data-ops="list">Expected IDs (comma list) <input id="expected_ids" placeholder="1,2,3"></label>
       <label data-ops="create patch upload">Payload (JSON)
