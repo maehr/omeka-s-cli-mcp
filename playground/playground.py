@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
+import httpx2
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from omeka_s_client import (
@@ -25,6 +26,7 @@ from omeka_s_client import (
     property_filter,
     property_filters,
 )
+from omeka_s_client._urls import without_keys
 from omeka_s_client.testing import FakeOmeka
 from omeka_s_client.transport import (
     ConnectFailed,
@@ -102,11 +104,15 @@ class Payload(BaseModel):
 
     mode: Literal["demo", "live"] = "demo"
     url: str = ""
+    key_identity: str | None = None
+    key_credential: str | None = None
     op: Literal["get", "page", "list", "create", "patch", "delete", "upload"]
     args: Args = Args()
 
     @model_validator(mode="after")
     def _check(self) -> "Payload":
+        if self.mode == "demo" and (self.key_identity or self.key_credential):
+            raise ValueError("API keys work only in Live mode.")
         if self.mode == "live":
             if self.op not in LIVE_OPS:
                 raise ValueError("Live mode allows only get, page, and list.")
@@ -234,7 +240,7 @@ class LiveTransport:
     def __call__(self, request: TransportRequest, /) -> TransportResponse:
         if request.method != "GET":
             raise ConnectFailed("Live mode allows only GET requests.")
-        self.requests.append(f"GET {request.url}")
+        self.requests.append(f"GET {without_keys(httpx2.URL(request.url))}")
         headers = {k: v for k, v in request.headers.items() if k.lower() in SAFE_HEADERS}
         try:
             response = self.send(request.url, headers=headers)
@@ -317,7 +323,16 @@ def snippet(payload: Payload) -> str:
         names.append("Upload")
     lines = [f"from omeka_s_client import {', '.join(sorted(names))}"]
     if payload.mode == "live":
-        opener = f"with OmekaClient({payload.url!r}) as client:"
+        if payload.key_identity or payload.key_credential:
+            lines.insert(0, "import os")
+            opener = (
+                f"with OmekaClient(\n    {payload.url!r},\n"
+                '    key_identity=os.environ["OMEKA_KEY_IDENTITY"],\n'
+                '    key_credential=os.environ["OMEKA_KEY_CREDENTIAL"],\n'
+                ") as client:"
+            )
+        else:
+            opener = f"with OmekaClient({payload.url!r}) as client:"
     else:
         lines.append("from omeka_s_client.testing import FakeOmeka")
         lines += [
@@ -387,7 +402,14 @@ def run_json(payload_json: str, demo: Demo, send: Callable[..., Any] | None = No
             if send is None:
                 raise ValueError("Live mode needs a sender.")
             live = live_transport(send)
-            client = OmekaClient(payload.url, transport=live, max_retries=0, sleep=_no_sleep)
+            client = OmekaClient(
+                payload.url,
+                key_identity=payload.key_identity or None,
+                key_credential=payload.key_credential or None,
+                transport=live,
+                max_retries=0,
+                sleep=_no_sleep,
+            )
         else:
             check_demo_filters(payload.pairs())
             client = OmekaClient(DEMO_URL, transport=demo.fake, max_retries=0, sleep=_no_sleep)

@@ -32,7 +32,9 @@ Each result card has a note. Output is the parsed JSON. Python snippet is the eq
 
 ## Live mode
 
-Live mode reads from a public Omeka S installation. It sends only GET requests. It sends no API keys. It reads only public records.
+Live mode reads from an Omeka S installation. It sends only GET requests.
+
+Live mode has two optional key fields. Keys let you read records that your Omeka user may see, including private ones. The key itself is not read-only, because it carries its user's role. Use a key of a low-privilege user, for example the Researcher role. Keys travel as query parameters. They appear in the server's access logs. The page keeps keys in memory only. It hides them in the Requests list and in the Python snippet. The snippet reads keys from `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL`.
 
 The browser enforces CORS. The server must send these headers.
 

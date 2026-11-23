@@ -24,10 +24,12 @@
       <legend>Mode</legend>
       <label><input type="radio" name="mode" value="demo" checked> Demo</label>
       <label><input type="radio" name="mode" value="live"> Live</label>
-      <p class="note">Demo: seeded synthetic data in your browser. Writes change only this data. Live: read-only GET requests to a public Omeka S. CORS and server permissions apply.</p>
+      <p class="note">Demo: seeded synthetic data in your browser. Writes change only this data. Live: read-only GET requests to an Omeka S installation, with optional API keys. CORS and server permissions apply.</p>
       <div id="live-box" hidden>
         <label>Omeka S URL <input id="url" type="url" placeholder="https://omeka.example.org"></label>
-        <p class="note">Public GET requests only. The client sends no API keys. The server must allow CORS and must let you read the records.</p>
+        <label>Key identity (optional) <input id="key_identity" type="password" autocomplete="off"></label>
+        <label>Key credential (optional) <input id="key_credential" type="password" autocomplete="off"></label>
+        <p class="note">Keys are optional. They let you read records that your Omeka user may see, including private ones. The playground sends only GET requests. The key itself is not read-only, because it carries its user's role. Use a key of a low-privilege user, for example the Researcher role. Keys travel as query parameters and appear in the server's access logs. The page keeps keys in memory only. The server must still allow CORS.</p>
       </div>
     </fieldset>
   </section>

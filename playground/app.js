@@ -115,7 +115,12 @@ $("form").addEventListener("submit", (e) => {
     return;
   }
   const payload = { mode: mode(), op, args };
-  if (payload.mode === "live") payload.url = $("url").value.trim();
+  if (payload.mode === "live") {
+    payload.url = $("url").value.trim();
+    for (const k of ["key_identity", "key_credential"]) {
+      if ($(k).value) payload[k] = $(k).value;
+    }
+  }
   setBusy(true);
   $("status").textContent = "Running...";
   worker.postMessage({ type: "run", payload });
