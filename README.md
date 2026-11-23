@@ -2,7 +2,7 @@
 
 Read and update Omeka S records with Python or the command line. Use the Model Context Protocol (MCP) server to connect an MCP client.
 
-The package supports Python 3.11 and later. The integration tests cover Omeka S 3.2.3, 4.1.1, and 4.2.1. [Compatibility](docs/compatibility.md)
+The package supports Python 3.11 and later. The integration tests cover Omeka S 3.2.3, 4.1.1, and 4.2.1. [Compatibility](https://github.com/maehr/omeka-s-client/blob/main/docs/compatibility.md) [API coverage](https://github.com/maehr/omeka-s-client/blob/main/docs/api-coverage.md)
 
 ## Install the prototype
 
@@ -36,23 +36,24 @@ with OmekaClient("https://example.org/collection") as client:
 omeka-s --url https://example.org/collection page items --per-page 10
 ```
 
-Use `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL` with the command line or MCP server for authenticated access. [CLI configuration](docs/cli.md)
+Use `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL` with the command line or MCP server for authenticated access. [CLI configuration](https://github.com/maehr/omeka-s-client/blob/main/docs/cli.md)
 
 ## Connect an MCP client
 
-`omeka-s-mcp` runs outside the Omeka installation and uses [FastMCP](https://github.com/PrefectHQ/fastmcp). Writes require a server setting and confirmation for each call. [MCP configuration](docs/mcp.md)
+`omeka-s-mcp` runs outside the Omeka installation and uses [FastMCP](https://github.com/PrefectHQ/fastmcp). Writes require a server setting and confirmation for each call. [MCP configuration](https://github.com/maehr/omeka-s-client/blob/main/docs/mcp.md)
 
 The [Omeka McpServer module](https://github.com/omeka-s-modules/McpServer) runs in Omeka S 4.2.1 or later and supplies read-only tools.
 
 ## Documentation
 
-- [Playground](https://maehr.github.io/omeka-s-client/): run the client in your browser. [Playground guide](docs/playground.md)
+- [API coverage](https://github.com/maehr/omeka-s-client/blob/main/docs/api-coverage.md): supported operations, resources, and limits.
+- [Playground](https://maehr.github.io/omeka-s-client/): run the client in your browser. [Playground guide](https://github.com/maehr/omeka-s-client/blob/main/docs/playground.md)
 - [Python API reference](https://maehr.github.io/omeka-s-client/api/): generated with pdoc from the public `omeka_s_client` API.
-- [Python API](docs/usage.md)
-- [Command line](docs/cli.md)
-- [MCP tools](docs/mcp.md)
-- [Snapshot format](docs/snapshot-format.md)
-- [Security](docs/security.md)
-- [Contributing](CONTRIBUTING.md)
+- [Python API](https://github.com/maehr/omeka-s-client/blob/main/docs/usage.md)
+- [Command line](https://github.com/maehr/omeka-s-client/blob/main/docs/cli.md)
+- [MCP tools](https://github.com/maehr/omeka-s-client/blob/main/docs/mcp.md)
+- [Snapshot format](https://github.com/maehr/omeka-s-client/blob/main/docs/snapshot-format.md)
+- [Security](https://github.com/maehr/omeka-s-client/blob/main/docs/security.md)
+- [Contributing](https://github.com/maehr/omeka-s-client/blob/main/CONTRIBUTING.md)
 
-The source code uses the [AGPL-3.0-only license](LICENSE).
+The source code uses the [AGPL-3.0-only license](https://github.com/maehr/omeka-s-client/blob/main/LICENSE).

@@ -19,6 +19,8 @@ with OmekaClient(
     matches = client.list("items", filters=conditions, verify=True)
 ```
 
+The client covers five common REST operation patterns. It has no `PUT` method. [API coverage](api-coverage.md)
+
 Records are JSON-LD dictionaries. The client preserves unknown keys and values. Use query pairs to preserve repeated keys and bracketed keys. Use `expected_ids` to check an exact set of IDs. This option enables listing verification.
 
 | Method | Result |
@@ -27,6 +29,32 @@ Records are JSON-LD dictionaries. The client preserves unknown keys and values. 
 | `page(resource, filters=..., page=..., per_page=...)` | Records, page number, page size, an optional total, and the next-page flag |
 | `list(resource, filters=..., verify=..., expected_ids=...)` | All matching records in page order |
 | `download(url, destination)` | Destination path, byte count, and SHA-256 digest |
+
+## Read lists
+
+`page` reads one page. `list` reads all pages in the server order. `list(verify=True)` also checks that the listing is consistent.
+
+```python
+from omeka_s_client import OmekaClient
+from omeka_s_client.testing import FakeOmeka
+
+fake = FakeOmeka({"items": [{"o:id": 1}, {"o:id": 2}, {"o:id": 3}]})
+with OmekaClient("https://example.org", transport=fake) as client:
+    first = client.page("items", per_page=2)  # 2 records, has_next is True
+    every = client.list("items", per_page=2)  # 3 records, no checks
+    checked = client.list("items", per_page=2, verify=True)  # 3 records, checked
+```
+
+A verified listing checks these conditions:
+
+- Each record has a positive integer `o:id`.
+- No ID appears twice.
+- The total count stays the same on each page.
+- The number of IDs agrees with the total count or with `expected_ids`.
+
+A verified listing sorts by ID. Do not put `sort_by` or `sort_order` in the filters. The client raises `ConfigurationError` for these keys. The server must send a total count, or you must supply `expected_ids`.
+
+**Note.** Verification checks only the records that the caller can see. It does not prove that the listing holds all records on the server. It does not give a consistent view at one point in time.
 
 The client retries transient reads. A verified listing repeats the complete read after a consistency check fails. The client waits 2 s before the second attempt and 4 s before the third. Catch `IncompleteListingError` if each verification attempt fails. Set `max_records` on `list` to reject a listing above a record limit.
 
@@ -56,9 +84,43 @@ with OmekaClient(
     client.patch("items", item["o:id"], {"o:is_public": False})
 ```
 
-Pass `replace_rdf_values=True` when the payload contains RDF values or `clear_property_values`. The client sends each write once. Check the record before you repeat a write after an unknown outcome or a server error. [Security](security.md)
+Pass `replace_rdf_values=True` to `patch` when the payload contains RDF values or `clear_property_values`. Otherwise `patch` raises `RDFReplacementRequiredError`. The client sends each write once. Check the record before you repeat a write after an unknown outcome or a server error. [Security](security.md)
 
 Read `client.has_api_keys` to check whether the client has both keys. It reports configured keys. It does not prove that the server accepts them.
+
+### Update RDF values
+
+A `patch` with RDF values replaces all RDF values of the record. To keep the other values, read the record first. Send all its RDF values with your change.
+
+```python
+from omeka_s_client import OmekaClient
+from omeka_s_client.testing import FakeOmeka
+
+
+def literal(value: str, property_id: int) -> dict[str, object]:
+    return {"type": "literal", "property_id": property_id, "@value": value}
+
+
+fake = FakeOmeka({"items": []})
+with OmekaClient("https://example.org", transport=fake) as client:
+    item = client.create(
+        "items",
+        {
+            "dcterms:title": [literal("Old title", 1)],
+            "dcterms:identifier": [literal("abc", 10)],
+        },
+    )
+    current = client.get("items", item["o:id"])
+    values = {
+        key: value
+        for key, value in current.items()
+        if ":" in key and not key.startswith(("@", "o:", "o-")) and isinstance(value, list)
+    }
+    values["dcterms:title"] = [literal("New title", 1)]
+    client.patch("items", item["o:id"], values, replace_rdf_values=True)
+```
+
+Use the property IDs of your installation. Read them from the `properties` resource.
 
 ### Delete a record
 
@@ -69,6 +131,10 @@ Use `client.delete("items", 123)` with an authenticated client that has permissi
 Some Omeka S versions can return HTTP 500 after they delete an item. [Compatibility](compatibility.md)
 
 ## Capture a snapshot
+
+**Caution.** A snapshot holds only the records that the client can read. An anonymous client reads only public records. Use API keys to include private records. Even with keys, the snapshot holds only the records that the user can see.
+
+A snapshot holds JSON-LD metadata. It does not hold the original media files. Use `download` to save a file.
 
 ```python
 from omeka_s_client import OmekaClient, capture_snapshot, read_snapshot, write_snapshot

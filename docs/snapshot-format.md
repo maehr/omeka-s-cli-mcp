@@ -1,6 +1,8 @@
 # Snapshot format
 
-A snapshot holds JSON-LD metadata and a manifest. Original files belong in a separate download.
+A snapshot holds JSON-LD metadata and a manifest. It does not hold the original media files. Original files belong in a separate download.
+
+**Caution.** A snapshot is not a complete backup. It holds only the records that the client can read. An anonymous client reads only public records. Use API keys for private records. The user permissions still limit the records. Other users can change records while the capture runs. The capture checks detect some of these changes, but not all of them.
 
 | Variant | Record files | Manifest |
 | --- | --- | --- |
