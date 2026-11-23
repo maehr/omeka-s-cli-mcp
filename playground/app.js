@@ -94,9 +94,14 @@ worker.onmessage = ({ data }) => {
   }
 };
 worker.onerror = (e) => {
-  $("status").textContent = "Worker error: " + e.message;
-  setBusy(false);
-  render({ ok: false, error: "WorkerError", message: e.message || "The worker stopped.", status: null });
+  // A failed worker cannot run later messages. Keep Run and Reset off and offer a reload.
+  busy = true;
+  $("run").disabled = true;
+  $("reset").disabled = true;
+  const reload = Object.assign(document.createElement("button"), { type: "button", textContent: "Reload page" });
+  reload.addEventListener("click", () => location.reload());
+  $("status").replaceChildren("Worker error: " + (e.message || "the worker stopped") + ". ", reload);
+  render({ ok: false, error: "WorkerError", message: (e.message || "The worker stopped.") + " Reload the page to try again.", status: null });
 };
 
 $("form").addEventListener("submit", (e) => {
