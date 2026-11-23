@@ -3,23 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>omeka-s-client playground</title>
+<title>Omeka S Client playground</title>
+<meta name="description" content="Try Omeka S Client, a Python toolkit for the Omeka S REST API, in your browser.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-  <h1>omeka-s-client playground</h1>
-  <p>Run the real <code>omeka_s_client</code> package for the Omeka S REST API in your browser with Pyodide.
-  Demo mode uses a seeded fake Omeka S installation. See the
-  <a href="https://github.com/maehr/omeka-s-client">repository</a>.</p>
+  <h1>Omeka S Client</h1>
+  <p>An independent Python toolkit for the Omeka S REST API. It has a Python library, a CLI, and an MCP server.
+  It reads and writes records, pages and filters lists, handles JSON-LD and files, and captures metadata snapshots.</p>
+  <p class="links"><a href="https://github.com/maehr/omeka-s-client/blob/main/README.md#install">Install</a> · <a href="api/">Python API</a> · <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/usage.md">Usage</a> · <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/cli.md">CLI</a> · <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/mcp.md">MCP server</a> · <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/api-coverage.md">API coverage</a> · <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/playground.md">Playground guide</a></p>
 </header>
 <main>
+  <h2>Interactive playground</h2>
   <p id="status" role="status">Loading Pyodide...</p>
   <div class="layout">
   <div class="left">
+  <section class="card">
+    <fieldset>
+      <legend>Mode</legend>
+      <label><input type="radio" name="mode" value="demo" checked> Demo</label>
+      <label><input type="radio" name="mode" value="live"> Live</label>
+      <p class="note">Demo: seeded synthetic data in your browser. Writes change only this data. Live: read-only GET requests to a public Omeka S. CORS and server permissions apply.</p>
+      <div id="live-box" hidden>
+        <label>Omeka S URL <input id="url" type="url" placeholder="https://omeka.example.org"></label>
+        <p class="note">Public GET requests only. The client sends no API keys. The server must allow CORS and must let you read the records.</p>
+      </div>
+    </fieldset>
+  </section>
   <section class="card" id="examples-box">
-    <h2>Examples</h2>
-    <p class="note">Each button fills the form in demo mode. Then press Run.</p>
+    <h2>Try it</h2>
+    <p class="note">Start with Read an item, press Run, then look at Output, Requests, and Python snippet. Then try list with Verify. Each button fills the form in demo mode.</p>
     <div id="example-buttons"><button type="button" class="example" data-example="0">Read an item</button><button type="button" class="example" data-example="1">Search by identifier</button><button type="button" class="example" data-example="2">Create an item</button></div>
     <p class="note" id="example-blurb" role="status"></p>
   </section>
@@ -69,15 +83,6 @@
 ]
   </script>
   <form id="form" class="card">
-    <fieldset>
-      <legend>Mode</legend>
-      <label><input type="radio" name="mode" value="demo" checked> Demo</label>
-      <label><input type="radio" name="mode" value="live"> Live</label>
-      <div id="live-box" hidden>
-        <label>Omeka S URL <input id="url" type="url" placeholder="https://omeka.example.org"></label>
-        <p class="note">Public GET requests only. The client sends no API keys. The server must allow CORS and must let you read the records.</p>
-      </div>
-    </fieldset>
     <label>Operation
       <select id="op">
         <option value="get">get</option>
@@ -128,13 +133,12 @@
     <button id="run" type="submit" disabled>Run</button>
     <button id="reset" type="button" disabled>Reset demo data</button>
   </form>
-  <p class="note">Reference: <a href="api/">Python API</a>, <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/api-coverage.md">API coverage</a>, <a href="https://github.com/maehr/omeka-s-client/blob/main/docs/playground.md">Playground guide</a>.</p>
   </div>
   <div class="results">
   <section class="card">
     <h2>Output</h2>
     <p class="note">The parsed JSON result.</p>
-    <div id="error" hidden></div>
+    <div id="error" role="alert" hidden></div>
     <pre id="output"></pre>
   </section>
   <section class="card">

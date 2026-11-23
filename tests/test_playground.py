@@ -75,6 +75,8 @@ def test_get_page_list() -> None:
     assert out["result"]["o:id"] == 3
     assert out["requests"] == ["GET https://demo.example.org/api/items/3"]
     assert "FakeOmeka(" in out["snippet"] and "client.get('items', 3)" in out["snippet"]
+    assert "records = {" in out["snippet"] and "# Template: use your own records." in out["snippet"]
+    assert "your own test data" not in out["snippet"]
     out = run("page", {"per_page": 5, "filters": [["item_set_id", "2"]]})
     assert out["result"]["total"] == 6 and out["result"]["has_next"]
     out = run(
@@ -242,3 +244,21 @@ def test_every_operation_has_help() -> None:
     assert len(ops) == 7
     for op in ops:
         assert re.search(rf'<p class="note" data-ops="{op}">', _html), op
+
+
+def test_page_intro_and_order() -> None:
+    assert re.search(r"<h1>Omeka S Client</h1>", _html)
+    for link in (
+        "README.md#install",
+        'href="api/"',
+        "docs/usage.md",
+        "docs/cli.md",
+        "docs/mcp.md",
+        "docs/api-coverage.md",
+        "docs/playground.md",
+    ):
+        assert link in _html, link
+    mode = _html.index("<legend>Mode</legend>")
+    assert mode < _html.index('id="examples-box"') < _html.index('id="op"')
+    assert _html.index('id="live-box"') < _html.index('id="examples-box"')
+    assert "Reference:" not in _html and 'role="alert"' in _html

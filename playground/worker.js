@@ -25,7 +25,14 @@ const ready = (async () => {
 ready.catch((e) => status("Failed to start: " + e));
 
 onmessage = async ({ data }) => {
-  const { mod, demo, send } = await ready;
+  let ctx;
+  try {
+    ctx = await ready;
+  } catch (e) {
+    postMessage({ type: "result", data: { ok: false, error: "WorkerError", message: String(e), status: null, snippet: "", requests: [], warnings: [] } });
+    return;
+  }
+  const { mod, demo, send } = ctx;
   if (data.type === "reset") {
     demo.reset();
     status("Demo data reset.", true);

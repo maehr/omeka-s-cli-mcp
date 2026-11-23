@@ -320,7 +320,12 @@ def snippet(payload: Payload) -> str:
         opener = f"with OmekaClient({payload.url!r}) as client:"
     else:
         lines.append("from omeka_s_client.testing import FakeOmeka")
-        lines += ["", "fake = FakeOmeka(records)  # your own test data"]
+        lines += [
+            "",
+            'records = {"items": [{"o:id": 1, "o:title": "Letter 1"}]}'
+            "  # Template: use your own records. The demo seeds 12 items.",
+            "fake = FakeOmeka(records)",
+        ]
         opener = f"with OmekaClient({DEMO_URL!r}, transport=fake) as client:"
     return "\n".join([*lines, "", opener, f"    result = {call}"])
 

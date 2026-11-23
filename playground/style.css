@@ -7,7 +7,7 @@ h2{font-size:1.15rem;margin:0}
 a{color:var(--link)}
 header{background:var(--ink);color:var(--cream);border-bottom:4px solid var(--teal);padding:1rem}
 header h1{margin:0 0 .4rem;font-size:1.5rem}
-header p{margin:0;max-width:60rem}
+header p{margin:0 0 .4rem;max-width:60rem}
 header a{color:#9fc4bd}
 main,footer{max-width:72rem;margin:0 auto;padding:1rem}
 .layout{display:grid;gap:1rem}

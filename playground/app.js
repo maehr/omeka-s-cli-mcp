@@ -9,8 +9,15 @@ const LIVE_OPS = ["get", "page", "list"];
 function refresh() {
   const live = mode() === "live";
   $("live-box").hidden = !live;
-  for (const o of $("op").options) o.disabled = live && !LIVE_OPS.includes(o.value);
-  if ($("op").selectedOptions[0].disabled) $("op").value = "get";
+  $("examples-box").hidden = live;
+  for (const o of $("op").options) {
+    o.disabled = live && !LIVE_OPS.includes(o.value);
+    o.textContent = o.disabled ? o.value + " (demo only)" : o.value;
+  }
+  if ($("op").selectedOptions[0].disabled) {
+    $("status").textContent = $("op").value + " runs only in demo mode. Switched to get.";
+    $("op").value = "get";
+  }
   const op = $("op").value;
   for (const el of document.querySelectorAll("[data-ops]")) {
     el.hidden = !el.dataset.ops.split(" ").includes(op);
@@ -86,7 +93,11 @@ worker.onmessage = ({ data }) => {
     setBusy(false);
   }
 };
-worker.onerror = (e) => { $("status").textContent = "Worker error: " + e.message; };
+worker.onerror = (e) => {
+  $("status").textContent = "Worker error: " + e.message;
+  setBusy(false);
+  render({ ok: false, error: "WorkerError", message: e.message || "The worker stopped.", status: null });
+};
 
 $("form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -111,7 +122,10 @@ $("form").addEventListener("submit", (e) => {
 });
 
 $("reset").addEventListener("click", () => { setBusy(true); worker.postMessage({ type: "reset" }); });
-$("copy").addEventListener("click", () => navigator.clipboard.writeText($("snippet").textContent));
+$("copy").addEventListener("click", () => {
+  const set = (t) => { $("copy").textContent = t; setTimeout(() => { $("copy").textContent = "Copy"; }, 2000); };
+  navigator.clipboard.writeText($("snippet").textContent).then(() => set("Copied"), () => set("Copy failed"));
+});
 const EXAMPLES = JSON.parse($("examples").textContent);
 const DEFAULTS = {};
 for (const el of document.querySelectorAll(".inputs input, .inputs textarea")) {

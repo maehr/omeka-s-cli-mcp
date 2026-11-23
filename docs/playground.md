@@ -12,11 +12,19 @@ Use demo mode to try reads, writes, and uploads. No data leaves your browser.
 
 Use the reset button to restore the sample data. Reloading the page also restores it.
 
+## Page order
+
+The left column has this order: Mode, the Live box, Try it, and Operation with its inputs. Run and Reset come last. Try it is hidden in Live mode.
+
+In Live mode, the menu marks the write operations as "demo only". It keeps them disabled. If you switch to Live while a write operation is selected, the page selects get. The status line tells you.
+
 ## Help and examples
 
 The page explains each operation under the Operation menu. Each input has a short note. The Verify note explains what a verified list checks and what it does not check.
 
 Three example buttons fill the form in demo mode. They read an item, search by identifier, and create an item. A button does not run the action. Press Run to run it.
+
+The Python snippet for demo mode defines a template `records` value. Replace it with your own records. The demo seeds 12 items.
 
 The create example changes only the demo data. Use Reset demo data to restore it.
 
