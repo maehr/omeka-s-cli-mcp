@@ -6,7 +6,7 @@ The playground shows the client calls for each action. It prints the Python snip
 
 ## Demo mode
 
-Demo mode uses `FakeOmeka`. This fake server runs in memory. It holds sample items, item sets, and media.
+Demo mode uses `FakeOmeka`. This fake server runs in memory. It holds synthetic sample items, item sets, and media. Demo writes change only this sample data.
 
 Use demo mode to try reads, writes, and uploads. No data leaves your browser.
 
@@ -14,7 +14,7 @@ Use the reset button to restore the sample data. Reloading the page also restore
 
 ## Live mode
 
-Live mode reads from a public Omeka S installation. It sends only GET requests. It sends no API keys.
+Live mode reads from a public Omeka S installation. It sends only GET requests. It sends no API keys. It reads only public records.
 
 The browser enforces CORS. The server must send these headers.
 
@@ -33,6 +33,7 @@ A list action fails if the browser hides the total header.
 - The command line and MCP server are not available.
 - The playground keeps no data between page loads.
 - `FakeOmeka` supports only some filters. The playground rejects the other filters.
+- The playground shows only part of the API. [API coverage](api-coverage.md)
 
 ## Run locally
 

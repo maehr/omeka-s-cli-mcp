@@ -2,6 +2,8 @@
 
 Install the `[cli]` extra. [Installation](../README.md#install-the-prototype)
 
+The CLI uses the Python client. The same API limits apply: one-segment resource names, positive integer IDs, and no `PUT`. [API coverage](api-coverage.md)
+
 Set `OMEKA_URL` to your Omeka S installation URL. For authenticated reads and writes, set `OMEKA_KEY_IDENTITY` and `OMEKA_KEY_CREDENTIAL`. Set `OMEKA_TIMEOUT` to change the 30-second timeout.
 
 Use `--env-file PATH` to load a settings file. Put global options before the command. Use `--key-credential-file PATH` when the credential is in a separate file. Keep that file private.
@@ -16,6 +18,12 @@ omeka-s download https://example.org/files/original/example.png example.png
 omeka-s snapshot capture 7 snapshot-7 --variant raw
 omeka-s snapshot check snapshot-7
 ```
+
+`omeka-s resources` reads only the first page of `api_resources`, with up to 50 resources. The list can be incomplete on an installation with many modules.
+
+`--verify` checks only the records that the caller can see. Do not pass `sort_by` or `sort_order` with `--verify`. [Read lists](usage.md#read-lists)
+
+`omeka-s snapshot capture` saves only the records that the keys can read. Without keys, it saves only public records. It does not save the original files. [Snapshot format](snapshot-format.md)
 
 Repeat `--filter` or `--property` to pass more conditions. Supply a JSON array of integer IDs to `--expected-ids FILE`. This option enables verification. Use `--jsonl` to write one JSON record per line.
 
