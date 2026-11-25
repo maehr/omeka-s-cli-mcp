@@ -57,6 +57,42 @@ def instance() -> Iterator[Instance]:
         yield Instance(url, version, identity, credential, client)
 
 
+_CORE_API_RESOURCES = {
+    "api_resources",
+    "assets",
+    "data_types",
+    "item_sets",
+    "items",
+    "jobs",
+    "media",
+    "modules",
+    "properties",
+    "resource_classes",
+    "resource_templates",
+    "resources",
+    "site_pages",
+    "sites",
+    "users",
+    "value_annotations",
+    "vocabularies",
+}
+
+
+def test_api_resources_ignore_paging(instance: Instance) -> None:
+    with httpx2.Client(trust_env=False) as raw:
+        response = raw.get(
+            instance.client.api_url + "api_resources", params={"per_page": 1, "page": 1}
+        )
+    response.raise_for_status()
+    assert 'rel="next"' not in response.headers.get("Link", "")
+    assert "Omeka-S-Total-Results" not in response.headers
+    assert {record["o:id"] for record in response.json()} >= _CORE_API_RESOURCES
+    with OmekaClient(instance.url, max_retries=0) as public:
+        page = public.page("api_resources", per_page=1)
+    assert not page.has_next
+    assert {record["o:id"] for record in page.records} >= _CORE_API_RESOURCES
+
+
 def literal(value: str, property_id: int) -> list[dict[str, str | int]]:
     return [{"type": "literal", "property_id": property_id, "@value": value}]
 

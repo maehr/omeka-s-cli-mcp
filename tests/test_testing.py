@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from omeka_s_client import OmekaClient, TransportRequest, Upload, property_filter, property_filters
+from omeka_s_client import (
+    IncompleteListingError,
+    OmekaClient,
+    TransportRequest,
+    Upload,
+    property_filter,
+    property_filters,
+)
 from omeka_s_client.testing import FakeOmeka
 
 
@@ -35,6 +42,25 @@ def test_fake_errors_when_route_or_input_does_not_match(
         body,
     )
     assert fake(request).status == status
+
+
+def test_fake_api_resources_ignore_paging_like_omeka() -> None:
+    fake = FakeOmeka({f"resource_{index:02}": [] for index in range(60)})
+    with OmekaClient("https://example.org", transport=fake) as client:
+        page = client.page("api_resources", per_page=1)
+        assert len(page.records) == 60
+        assert page.total is None
+        assert not page.has_next
+        assert len(client.list("api_resources")) == 60
+
+
+def test_verified_api_resources_listing_fails_without_count_or_integer_ids() -> None:
+    fake = FakeOmeka({"items": []})
+    with (
+        OmekaClient("https://example.org", transport=fake, sleep=lambda _: None) as client,
+        pytest.raises(IncompleteListingError),
+    ):
+        client.list("api_resources", verify=True)
 
 
 def test_fake_delete_removes_only_the_target_record() -> None:
