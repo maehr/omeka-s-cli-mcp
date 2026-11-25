@@ -19,7 +19,7 @@ omeka-s snapshot capture 7 snapshot-7 --variant raw
 omeka-s snapshot check snapshot-7
 ```
 
-`omeka-s resources` reads only the first page of `api_resources`, with up to 50 resources. The list can be incomplete on an installation with many modules.
+`omeka-s resources` returns the complete list of API resources in one response. Omeka S does not page `api_resources`. [Compatibility](compatibility.md)
 
 `--verify` checks only the records that the caller can see. Do not pass `sort_by` or `sort_order` with `--verify`. [Read lists](usage.md#read-lists)
 

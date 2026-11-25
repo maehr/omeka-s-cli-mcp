@@ -19,7 +19,7 @@ The deletion tests check that Omeka S removes the item on all three versions. Ve
 
 Omeka S 3.2.3 adds `sort_by=id` and `sort_order=asc` to next links when the request omits them. The tested 4.x versions also add empty `sort_by_default` and `sort_order_default` parameters. The client accepts those defaults and checks the remaining filters.
 
-Use `page` and `per_page` for paging. Read `api_resources` for JSON resource discovery. `page("api_resources")` reads only the first page. The `/api` path returns an HTML page.
+Use `page` and `per_page` for paging. Read `api_resources` for JSON resource discovery. Omeka S returns all API resources in one response. It ignores `page` and `per_page` and sends no total count. So `page("api_resources")` returns the complete list. A verified listing of `api_resources` fails, because the response has no count and the IDs are not numbers. The `/api` path returns an HTML page.
 
 ## Pyodide
 

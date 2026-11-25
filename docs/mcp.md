@@ -47,7 +47,7 @@ The server uses standard input and output by default. The `omeka-s mcp` command 
 | `omeka_patch_record` | Preview or update an Omeka record |
 | `omeka_delete_record` | Preview or permanently delete an Omeka record |
 
-`omeka_list_api_resources` reads only the first page of `api_resources`, with up to 50 resources. The list can be incomplete on an installation with many modules.
+`omeka_list_api_resources` returns the complete list of API resources in one response. Omeka S does not page `api_resources`. [Compatibility](compatibility.md)
 
 The tools use the Python client. The same API limits apply: one-segment resource names, positive integer IDs, and no `PUT`. [API coverage](api-coverage.md)
 
