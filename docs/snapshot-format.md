@@ -29,12 +29,6 @@ The writer stores an item set object and arrays of item and media records. It om
 
 Use `extra` for additional manifest fields. Reserve the fields in this table for the writer.
 
-## Read a legacy snapshot
-
-The reader selects the transformed, plain, or raw file for each group, in that order. The item set file is optional. The reader accepts a single item or media object and returns a list.
-
-The reader checks the counts in each manifest. All manifest sources must agree. If a manifest does not supply a source, the reader derives it from the first record URL that contains `/api/`.
-
 ## Publish a snapshot directory
 
 Create the parent directory before you write a snapshot. Choose a new directory name for each writer. The writer synchronizes the files before it renames the temporary directory. On Unix it also synchronizes the temporary directory. It uses owner-only permissions where the file system supports them.

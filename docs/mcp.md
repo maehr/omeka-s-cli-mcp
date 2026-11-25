@@ -68,21 +68,3 @@ Use `omeka-s-mcp --transport http` for HTTP transport. The default endpoint is `
 **Caution.** Check the installation, resource, and ID in the preview. Omeka S permanently deletes the record when you confirm.
 
 Enable the Omeka write tools before you call `omeka_delete_record`. To preview the request, pass `{"resource": "items", "record_id": 123}`. Add `"confirm": true` to the call arguments to send the request. Check the record before you repeat a deletion after an unknown outcome or a server error. [Write errors](security.md#writes)
-
-## Migrate existing MCP clients
-
-The server now reports the name **Omeka S Client**. Update tool calls and allowlists to use the names below. Replace each argument shown in the last column.
-
-| Previous tool | Current tool | Argument change |
-| --- | --- | --- |
-| `omeka_api_resources` | `omeka_list_api_resources` | |
-| `omeka_get` | `omeka_get_record` | `id` becomes `record_id` |
-| `omeka_search` | `omeka_list_records_page` | |
-| `omeka_find_by_property` | `omeka_find_records_by_property` | `type` becomes `comparison` |
-| `omeka_list_all` | `omeka_list_all_records` | |
-| `omeka_capture_snapshot` | `omeka_capture_snapshot` | `name` becomes `directory` |
-| `omeka_download` | `omeka_download_file` | `name` becomes `destination` |
-| `omeka_create` | `omeka_create_record` | |
-| `omeka_patch` | `omeka_patch_record` | `id` becomes `record_id` |
-
-Reconnect the MCP client to refresh its tool list.
