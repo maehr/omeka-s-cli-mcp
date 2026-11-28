@@ -37,9 +37,9 @@ dev = [
   "pytest-cov==7.1.0",
   "pytest-asyncio==1.5.0",
   "ruff==0.17.6",
-  "ty==0.0.107",
+  "ty==0.0.110",
   "prek==0.5.11",
-  "commitizen==4.19.4",
+  "commitizen==4.20.1",
   "git-cliff==2.14.2",
 ]
 docs = [
